@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
+import { Prisma } from "@prisma/client";
+
+type OrderWithItems = Prisma.OrderGetPayload<{
+    include: { items: true }
+}>;
 
 export default async function AdminOrdersPage() {
     const orders = await prisma.order.findMany({
@@ -32,7 +37,7 @@ export default async function AdminOrdersPage() {
                                 <td colSpan={6} className="p-8 text-center text-gray-500">Chưa có đơn hàng nào.</td>
                             </tr>
                         ) : (
-                            orders.map((order) => (
+                            orders.map((order: OrderWithItems) => (
                                 <tr key={order.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="p-4 text-xs text-gray-400 font-mono">#{order.id.slice(0, 8)}</td>
 
@@ -55,6 +60,7 @@ export default async function AdminOrdersPage() {
 
                                     <td className="p-4">
                                         <ul className="list-disc pl-4 text-gray-600 space-y-1">
+                                            {/* Bỏ luôn chữ :any ở đây, vì có OrderWithItems ở trên rồi TypeScript sẽ tự hiểu item là gì */}
                                             {order.items.map((item) => (
                                                 <li key={item.id} className="text-xs">
                                                     <span className="font-medium">{item.quantity}x</span> {item.name}
