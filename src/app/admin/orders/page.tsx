@@ -2,14 +2,11 @@ import { prisma } from "@/lib/prisma";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 
 export default async function AdminOrdersPage() {
-    // 1. Truy vấn dữ liệu như bình thường
     const orders = await prisma.order.findMany({
         orderBy: { createdAt: "desc" },
         include: { items: true },
     });
 
-    // 2. ROOT FIX: Trích xuất kiểu dữ liệu trực tiếp từ mảng orders vừa gọi ở trên.
-    // 'typeof orders[number]' sẽ tự động lấy chính xác cấu trúc của 1 đơn hàng bao gồm cả items.
     type OrderWithItems = typeof orders[number];
 
     return (
@@ -61,7 +58,6 @@ export default async function AdminOrdersPage() {
 
                                     <td className="p-4">
                                         <ul className="list-disc pl-4 text-gray-600 space-y-1">
-                                            {/* Vì order đã được định kiểu chuẩn, biến 'item' ở đây TypeScript sẽ tự động biết nó là OrderItem mà không cần khai báo gì thêm! */}
                                             {order.items.map((item) => (
                                                 <li key={item.id} className="text-xs">
                                                     <span className="font-medium">{item.quantity}x</span> {item.name}
