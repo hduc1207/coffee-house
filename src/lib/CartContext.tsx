@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, ReactNode } from "react";
+import {Product} from "@prisma/client";
 
 export interface CartItem {
     id: string;
@@ -11,10 +12,11 @@ export interface CartItem {
 
 interface CartContextType {
     cartItems: CartItem[];
-    addToCart: (item: any) => void;
+    addToCart: (item: Product) => void;
     removeFromCart: (id: string) => void;
     updateQuantity: (id: string, delta: number) => void;
     totalPrice: number;
+    clearCart: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -22,7 +24,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: ReactNode }) => {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-    const addToCart = (product: any) => {
+    const addToCart = (product: Product) => {
         setCartItems((prev) => {
             const existingItem = prev.find((item) => item.id === product.id);
             if (existingItem) {
@@ -30,10 +32,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                     item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
                 );
             }
-            const priceNumber = typeof product.price === 'string'
-                ? parseInt(product.price.replace(/\D/g, ""))
-                : product.price;
-            return [...prev, { ...product, price: priceNumber, quantity: 1 }];
+
+            return [...prev, { ...product, quantity: 1 }];
         });
     };
 
@@ -52,10 +52,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         );
     };
 
+    const clearCart = () => {
+        setCartItems([]);
+    };
+
     const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
     return (
-        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, totalPrice }}>
+        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, totalPrice, clearCart }}>
             {children}
         </CartContext.Provider>
     );

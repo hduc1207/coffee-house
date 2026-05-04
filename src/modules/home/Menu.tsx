@@ -1,4 +1,5 @@
-// Dữ liệu các món nước (Mock Data)
+import Link from "next/link";
+
 const products = [
     {
         id: "1",
@@ -30,9 +31,9 @@ export default function Menu() {
             {/* Phần tiêu đề của Menu */}
             <div className="flex justify-between items-end mb-12 border-b border-aesop-border/50 pb-6">
                 <h2 className="text-3xl font-serif text-aesop-text">Tuyển tập hương vị</h2>
-                <button className="text-xs uppercase tracking-widest text-gray-500 hover:text-aesop-accent transition-colors">
-                    Xem toàn bộ
-                </button>
+                <Link href="/menu" className="text-xs uppercase tracking-widest text-aesop-text hover:text-aesop-accent transition-colors">
+                    XEM TOÀN BỘ
+                </Link>
             </div>
 
             {/* Lưới danh sách sản phẩm */}

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Story() {
     return (
         <section className="py-32 px-6 md:px-10 bg-[#E8E6E1] flex flex-col items-center justify-center text-center">
@@ -9,9 +11,12 @@ export default function Story() {
                 &quot;Mỗi tách cà phê không chỉ là một thức uống, mà là một khoảng lặng để bạn tìm lại nhịp điệu của chính mình giữa thế giới ồn ào.&quot;
             </h2>
             <div className="mt-12 w-px h-16 bg-gray-400"></div>
-            <button className="mt-10 text-xs uppercase tracking-widest text-gray-600 border-b border-transparent hover:border-gray-600 transition-colors pb-1">
-                Đọc toàn bộ câu chuyện
-            </button>
+            <Link
+                href="/story"
+                className="text-xs font-sans font-semibold uppercase tracking-wider text-aesop-text hover:text-aesop-accent transition-colors"
+            >
+                ĐỌC TOÀN BỘ CÂU CHUYỆN
+            </Link>
 
         </section>
     );

@@ -4,13 +4,14 @@ import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { CartProvider } from "@/lib/CartContext";
+import ConditionalLayout from "@/components/layout/ConditionalLayout";
 
 const inter = Inter({ subsets: ["latin", "vietnamese"], variable: "--font-inter" });
 const playfair = Playfair_Display({ subsets: ["latin", "vietnamese"], variable: "--font-playfair" });
 
 export const metadata: Metadata = {
-  title: "The Bamboo Coffee",
-  description: "Trải nghiệm cà phê nguyên bản",
+    title: "The Bamboo Coffee",
+    description: "Trải nghiệm cà phê nguyên bản",
 };
 
 export default function RootLayout({
@@ -24,19 +25,15 @@ export default function RootLayout({
             className={`${inter.variable} ${playfair.variable} font-sans antialiased min-h-screen flex flex-col`}
         >
         <CartProvider>
-
-            {/* Thanh Menu sẽ luôn nằm ở trên cùng */}
-            <Header />
-
-            {/* Phần nội dung trang web sẽ nằm ở đây */}
-            <main className="flex-grow">
-                {children}
-            </main>
-
-            <Footer />
-
+            <ConditionalLayout
+                header={<Header />}
+                footer={<Footer />}
+            >
+                <main className="flex-grow">
+                    {children}
+                </main>
+            </ConditionalLayout>
         </CartProvider>
-
         </body>
         </html>
     );

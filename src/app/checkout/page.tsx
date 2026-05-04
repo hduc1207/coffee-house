@@ -2,122 +2,140 @@
 
 import { useCart } from "@/lib/CartContext";
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
-    const { cartItems, totalPrice } = useCart();
+    const { cartItems, totalPrice, clearCart } = useCart();
+    const router = useRouter();
+    const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery");
+    const [paymentMethod, setPaymentMethod] = useState("cod");
+    const [customerName, setCustomerName] = useState("");
+    const [phone, setPhone] = useState("");
+    const [address, setAddress] = useState("");
+    const [notes, setNotes] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const finalTotal = totalPrice + (deliveryMethod === "pickup" ? 0 : 30000);
+    const handleCheckout = async () => {
+        if (!customerName || !phone) {
+            alert("Vui lòng điền Tên và Số điện thoại để quán liên hệ nhé!");
+            return;
+        }
+        if (deliveryMethod === "delivery" && !address) {
+            alert("Vui lòng điền Địa chỉ giao hàng!");
+            return;
+        }
 
+        setIsSubmitting(true);
+        const orderData = {
+            customerName,
+            phone,
+            address: deliveryMethod === "pickup" ? "Lấy tại quán" : address,
+            notes,
+            deliveryMethod,
+            paymentMethod,
+            totalAmount: finalTotal,
+            items: cartItems,
+        };
+
+        try {
+            const response = await fetch("/api/order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(orderData),
+            });
+
+            if (response.ok) {
+                alert("Đặt hàng thành công! The Bamboo sẽ liên hệ với bạn sớm nhất.");
+                clearCart();
+                router.push("/menu");
+            } else {
+                alert("Có lỗi xảy ra, vui lòng thử lại!");
+            }
+        } catch (error) {
+            alert("Lỗi kết nối mạng!");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (cartItems.length === 0) {
+        return (
+            <div className="min-h-[70vh] flex flex-col items-center justify-center">
+                <h1 className="text-3xl font-serif text-[#333] mb-6">Chưa có sản phẩm nào để thanh toán</h1>
+                <Link href="/menu" className="px-8 py-4 bg-[#333] text-white text-xs tracking-[0.2em] uppercase">
+                    Quay lại Thực Đơn
+                </Link>
+            </div>
+        );
+    }
     return (
-        <div className="min-h-screen bg-aesop-bg py-24 px-6 md:px-10 lg:px-24">
-            <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20">
-                <div className="space-y-12">
-                    <header className="space-y-2">
-                        <h1 className="text-3xl font-serif text-aesop-text">Thanh toán</h1>
-                        <p className="text-sm text-gray-500 font-light">Vui lòng điền thông tin gửi hàng bên dưới.</p>
-                    </header>
+        <div className="min-h-screen bg-[#F9F8F4] pt-32 px-6 lg:px-10 pb-24">
+            <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-16 lg:gap-24">
+                <div className="w-full lg:w-3/5">
+                    <h1 className="text-4xl font-serif text-[#333] mb-12">Thanh Toán</h1>
 
-                    <form className="space-y-8">
-                        <div className="space-y-6">
-                            <h2 className="text-xs uppercase tracking-[0.2em] font-bold text-gray-400">Thông tin nhận hàng</h2>
+                    <div className="flex gap-4 mb-10 border-b border-gray-200 pb-2">
+                        <button onClick={() => setDeliveryMethod("delivery")} className={`pb-4 px-2 text-sm tracking-widest uppercase transition-colors ${deliveryMethod === "delivery" ? "border-b-2 border-[#333] text-[#333]" : "text-gray-400"}`}>Giao Tận Nơi</button>
+                        <button onClick={() => setDeliveryMethod("pickup")} className={`pb-4 px-2 text-sm tracking-widest uppercase transition-colors ${deliveryMethod === "pickup" ? "border-b-2 border-[#333] text-[#333]" : "text-gray-400"}`}>Lấy Tại Quán</button>
+                    </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <input
-                                    type="text"
-                                    placeholder="Họ và tên"
-                                    className="bg-transparent border-b border-aesop-border/50 py-3 text-sm focus:border-aesop-accent outline-none transition-colors font-light"
-                                />
-                                <input
-                                    type="tel"
-                                    placeholder="Số điện thoại"
-                                    className="bg-transparent border-b border-aesop-border/50 py-3 text-sm focus:border-aesop-accent outline-none transition-colors font-light"
-                                />
-                            </div>
-
-                            <input
-                                type="email"
-                                placeholder="Email (không bắt buộc)"
-                                className="w-full bg-transparent border-b border-aesop-border/50 py-3 text-sm focus:border-aesop-accent outline-none transition-colors font-light"
-                            />
-
-                            <input
-                                type="text"
-                                placeholder="Địa chỉ giao hàng"
-                                className="w-full bg-transparent border-b border-aesop-border/50 py-3 text-sm focus:border-aesop-accent outline-none transition-colors font-light"
-                            />
-
-                            <textarea
-                                placeholder="Ghi chú thêm (ví dụ: cửa hàng màu xanh, gọi trước khi giao...)"
-                                rows={3}
-                                className="w-full bg-transparent border-b border-aesop-border/50 py-3 text-sm focus:border-aesop-accent outline-none transition-colors font-light resize-none"
-                            />
+                    <div className="space-y-6 mb-12">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} type="text" placeholder="Tên người nhận *" className="w-full border-b border-gray-300 py-3 bg-transparent outline-none focus:border-[#333] text-[15px]" />
+                            <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" placeholder="Số điện thoại *" className="w-full border-b border-gray-300 py-3 bg-transparent outline-none focus:border-[#333] text-[15px]" />
                         </div>
 
-                        <div className="space-y-6 pt-6">
-                            <h2 className="text-xs uppercase tracking-[0.2em] font-bold text-gray-400">Phương thức thanh toán</h2>
-                            <div className="space-y-4">
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <input type="radio" name="payment" defaultChecked className="accent-aesop-accent" />
-                                    <span className="text-sm font-light text-aesop-text group-hover:text-aesop-accent">Thanh toán khi nhận hàng (COD)</span>
-                                </label>
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <input type="radio" name="payment" className="accent-aesop-accent" />
-                                    <span className="text-sm font-light text-aesop-text group-hover:text-aesop-accent">Chuyển khoản ngân hàng</span>
-                                </label>
-                            </div>
-                        </div>
-                    </form>
+                        {deliveryMethod === "delivery" && (
+                            <input value={address} onChange={(e) => setAddress(e.target.value)} type="text" placeholder="Địa chỉ giao hàng chi tiết *" className="w-full border-b border-gray-300 py-3 bg-transparent outline-none focus:border-[#333] text-[15px]" />
+                        )}
+
+                        <input value={notes} onChange={(e) => setNotes(e.target.value)} type="text" placeholder="Ghi chú cho quán (Ví dụ: Ít đá, không đường...)" className="w-full border-b border-gray-300 py-3 bg-transparent outline-none focus:border-[#333] text-[15px]" />
+                    </div>
+
+                    <h3 className="text-xl font-serif text-[#333] mb-6">Phương thức thanh toán</h3>
+                    <div className="space-y-4">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="payment" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} className="w-4 h-4 accent-[#333]" />
+                            <span className="text-[15px] text-gray-700">Thanh toán tiền mặt khi nhận hàng (COD)</span>
+                        </label>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="payment" checked={paymentMethod === "momo"} onChange={() => setPaymentMethod("momo")} className="w-4 h-4 accent-[#333]" />
+                            <span className="text-[15px] text-gray-700">Thanh toán qua Ví MoMo</span>
+                        </label>
+                    </div>
                 </div>
 
-                <div className="lg:sticky lg:top-32 h-fit bg-[#E8E6E1] p-8 md:p-12 space-y-8">
-                    <h2 className="text-xl font-serif text-aesop-text border-b border-aesop-border pb-4">Đơn hàng của bạn</h2>
+                <div className="w-full lg:w-2/5">
+                    <div className="bg-white p-8 lg:p-10 border border-gray-100 shadow-sm sticky top-32">
+                        <h2 className="text-xl font-serif text-[#333] mb-6 border-b border-gray-100 pb-4">Đơn Hàng ({cartItems.length} món)</h2>
 
-                    <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2">
-                        {cartItems.map((item) => (
-                            <div key={item.id} className="flex justify-between items-start gap-4">
-                                <div className="flex gap-4">
-                                    <div className="w-12 h-16 bg-white shrink-0 overflow-hidden">
-                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover grayscale-[20%]" />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-serif text-aesop-text">{item.name}</h4>
-                                        <p className="text-xs text-gray-500 font-light">Số lượng: {item.quantity}</p>
-                                    </div>
+                        <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2">
+                            {cartItems.map((item) => (
+                                <div key={item.id} className="flex justify-between items-start text-[14px]">
+                                    <div className="flex gap-3"><span className="font-medium text-gray-500">{item.quantity}x</span><span className="text-[#333]">{item.name}</span></div>
+                                    <span className="text-gray-600">{(item.price * item.quantity).toLocaleString('vi-VN')}đ</span>
                                 </div>
-                                <span className="text-sm text-aesop-text">
-                  {(item.price * item.quantity).toLocaleString("vi-VN")}đ
-                </span>
-                            </div>
-                        ))}
-                        {cartItems.length === 0 && (
-                            <p className="text-sm text-gray-500 font-light text-center py-4">Chưa có sản phẩm nào.</p>
-                        )}
-                    </div>
-
-                    <div className="space-y-4 pt-6 border-t border-aesop-border">
-                        <div className="flex justify-between text-sm text-gray-600">
-                            <span>Tạm tính</span>
-                            <span>{totalPrice.toLocaleString("vi-VN")}đ</span>
+                            ))}
                         </div>
-                        <div className="flex justify-between text-sm text-gray-600">
-                            <span>Phí vận chuyển</span>
-                            <span>Miễn phí</span>
-                        </div>
-                        <div className="flex justify-between text-lg font-serif text-aesop-text pt-4 border-t border-aesop-border">
-                            <span>Tổng cộng</span>
-                            <span>{totalPrice.toLocaleString("vi-VN")}đ</span>
-                        </div>
-                    </div>
 
-                    <button
-                        disabled={cartItems.length === 0}
-                        className="w-full bg-aesop-text text-aesop-bg py-5 text-xs uppercase tracking-[0.2em] hover:bg-aesop-accent transition-all duration-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                    >
-                        Xác nhận đặt hàng
-                    </button>
+                        <div className="border-t border-gray-200 pt-6 space-y-4 text-[15px] mb-8">
+                            <div className="flex justify-between text-gray-600"><span>Tạm tính</span><span>{totalPrice.toLocaleString('vi-VN')}đ</span></div>
+                            <div className="flex justify-between text-gray-600"><span>Phí giao hàng</span><span>{deliveryMethod === "pickup" ? "0đ" : "30.000đ"}</span></div>
+                        </div>
 
-                    <div className="text-center">
-                        <Link href="/menu" className="text-[10px] uppercase tracking-widest text-gray-500 hover:text-aesop-text transition-colors">
-                            Quay lại thực đơn
-                        </Link>
+                        <div className="flex justify-between items-center pt-6 border-t border-gray-200 mb-10">
+                            <span className="text-lg text-[#333] font-medium">Tổng thanh toán</span>
+                            <span className="text-2xl font-serif text-[#333]">{finalTotal.toLocaleString('vi-VN')}đ</span>
+                        </div>
+
+                        <button
+                            onClick={handleCheckout}
+                            disabled={isSubmitting}
+                            className={`w-full py-4 text-white text-xs tracking-[0.2em] uppercase transition-colors ${isSubmitting ? "bg-gray-400 cursor-wait" : "bg-[#333] hover:bg-black"}`}
+                        >
+                            {isSubmitting ? "ĐANG XỬ LÝ..." : "ĐẶT HÀNG"}
+                        </button>
                     </div>
                 </div>
 
