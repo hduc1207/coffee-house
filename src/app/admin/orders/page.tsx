@@ -6,7 +6,6 @@ export default async function AdminOrdersPage() {
         orderBy: { createdAt: "desc" },
         include: { items: true },
     });
-
     type OrderWithItems = typeof orders[number];
 
     return (
@@ -34,10 +33,9 @@ export default async function AdminOrdersPage() {
                                 <td colSpan={6} className="p-8 text-center text-gray-500">Chưa có đơn hàng nào.</td>
                             </tr>
                         ) : (
-                            // 3. Sử dụng kiểu dữ liệu vừa trích xuất
                             orders.map((order: OrderWithItems) => (
                                 <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="p-4 text-xs text-gray-400 font-mono">#{order.id.slice(0, 8)}</td>
+                                    <td className="p-4 text-xs text-gray-400 font-mono">#{String(order.id).slice(0, 8)}</td>
 
                                     <td className="p-4">
                                         <p className="font-medium text-gray-800">{order.customerName}</p>
@@ -58,7 +56,7 @@ export default async function AdminOrdersPage() {
 
                                     <td className="p-4">
                                         <ul className="list-disc pl-4 text-gray-600 space-y-1">
-                                            {order.items.map((item) => (
+                                            {order.items.map((item: { id: string | number; name: string; quantity: number }) => (
                                                 <li key={item.id} className="text-xs">
                                                     <span className="font-medium">{item.quantity}x</span> {item.name}
                                                 </li>
