@@ -1,6 +1,6 @@
 import NextAuth, { SessionStrategy } from "next-auth";
 import { JWT } from "next-auth/jwt";
-import { Session } from "next-auth";
+import { Session, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
@@ -46,10 +46,10 @@ export const authOptions = {
     ],
     session: {
         strategy: "jwt" as SessionStrategy,
-        maxAge: 30 * 24 * 60 * 60, // 30 days
+        maxAge: 30 * 24 * 60 * 60,
     },
     callbacks: {
-        async jwt({ token, user }: { token: JWT; user?: any }) {
+        async jwt({ token, user }: { token: JWT; user?: User }) {
             if (user) {
                 token.id = user.id;
                 token.name = user.name;
