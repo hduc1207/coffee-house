@@ -3,7 +3,7 @@
 import { useCart } from "@/lib/CartContext";
 import Link from "next/link";
 
-export default function Cart({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+export default function Cart({ isOpen, onCloseAction }: { isOpen: boolean; onCloseAction: () => void }) {
     const { cartItems, removeFromCart, updateQuantity, totalPrice } = useCart();
 
     return (
@@ -12,7 +12,7 @@ export default function Cart({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] transition-opacity duration-500 ${
                     isOpen ? "opacity-100 visible" : "opacity-0 invisible"
                 }`}
-                onClick={onClose}
+                onClick={onCloseAction}
             ></div>
 
             <div
@@ -25,7 +25,7 @@ export default function Cart({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                         Giỏ hàng {cartItems.length > 0 ? `(${cartItems.length})` : ""}
                     </h2>
                     <button
-                        onClick={onClose}
+                        onClick={onCloseAction}
                         className="text-xs tracking-widest text-gray-500 hover:text-aesop-text uppercase transition-colors"
                     >
                         Đóng ✕
@@ -37,7 +37,7 @@ export default function Cart({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                         <div className="h-full flex flex-col items-center justify-center space-y-5">
                             <p className="text-sm text-gray-500 font-light">Giỏ hàng của bạn đang trống.</p>
                             <button
-                                onClick={onClose}
+                                onClick={onCloseAction}
                                 className="text-xs uppercase tracking-widest border-b border-aesop-text pb-1 hover:text-aesop-accent hover:border-aesop-accent transition-colors"
                             >
                                 Tiếp tục khám phá
@@ -97,7 +97,7 @@ export default function Cart({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 
                     <Link
                         href="/checkout"
-                        onClick={onClose}
+                        onClick={onCloseAction}
                         className={`block w-full py-4 text-xs uppercase tracking-widest text-center transition-colors ${
                             cartItems.length === 0
                                 ? "bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none"

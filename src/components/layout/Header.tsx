@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import Cart from "@/components/layout/Cart";
 import { useCart } from "@/lib/CartContext";
+import LoginButton from "@/components/LoginButton";
 
 export default function Header() {
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -60,9 +61,7 @@ export default function Header() {
                             <Link href="/story" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-serif text-aesop-text hover:text-aesop-accent transition-colors">Câu chuyện</Link>
                             <Link href="/stores" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-serif text-aesop-text hover:text-aesop-accent transition-colors">Cửa hàng</Link>
                             <div className="w-full h-[1px] bg-gray-300"></div>
-                            <button className="text-left text-base font-serif text-aesop-text hover:text-aesop-accent transition-colors">
-                                Đăng nhập
-                            </button>
+                            <LoginButton className="text-left text-base font-serif text-aesop-text hover:text-aesop-accent transition-colors uppercase w-full" />
                         </div>
                     </div>
 
@@ -71,7 +70,9 @@ export default function Header() {
                     </Link>
 
                     <div className="flex gap-6 text-xs font-sans font-semibold uppercase tracking-wider text-aesop-text items-center">
-                        <button className="hover:text-aesop-accent transition-colors hidden md:block">Đăng nhập</button>
+                        <div className="hidden md:block">
+                            <LoginButton className="hover:text-aesop-accent transition-colors normal-case" />
+                        </div>
 
                         <button
                             onClick={() => setIsCartOpen(true)}
@@ -97,7 +98,7 @@ export default function Header() {
                 </div>
             </header>
 
-            <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+            <Cart isOpen={isCartOpen} onCloseAction={() => setIsCartOpen(false)} />
         </>
     );
 }

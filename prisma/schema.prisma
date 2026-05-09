@@ -35,6 +35,8 @@ model Order {
   status         String      @default("PENDING")
   createdAt      DateTime    @default(now())
   items          OrderItem[]
+  userId    String?
+  user      User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 
 // Bảng lưu chi tiết từng món trong Đơn hàng
@@ -47,4 +49,74 @@ model OrderItem {
   quantity  Int
 
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+// Bảng lưu thông tin tài khoản liên kết với các nhà cung cấp dịch vụ xác thực
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+// Bảng lưu thông tin phiên đăng nhập của người dùng
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Bảng lưu thông tin người dùng
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String    @default("user")
+  accounts      Account[]
+  sessions      Session[]
+  orders        Order[]
+  addresses     Address[]
+}
+// Bảng lưu thông tin địa chỉ giao hàng của người dùng
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  phone     String
+  street    String
+  isDefault Boolean  @default(false)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+// Bảng lưu thông tin cửa hàng
+model Store {
+  id        String   @id @default(cuid())
+  city      String
+  name      String
+  address   String
+  hours     String
+  phone     String
+  image     String
+  desc      String
+
+  createdAt DateTime @default(now())
 }

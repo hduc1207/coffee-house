@@ -5,6 +5,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { CartProvider } from "@/lib/CartContext";
 import ConditionalLayout from "@/components/layout/ConditionalLayout";
+import { Providers } from "@/components/Providers";
 
 const inter = Inter({ subsets: ["latin", "vietnamese"], variable: "--font-inter" });
 const playfair = Playfair_Display({ subsets: ["latin", "vietnamese"], variable: "--font-playfair" });
@@ -24,16 +25,18 @@ export default function RootLayout({
         <body
             className={`${inter.variable} ${playfair.variable} font-sans antialiased min-h-screen flex flex-col`}
         >
-        <CartProvider>
-            <ConditionalLayout
-                header={<Header />}
-                footer={<Footer />}
-            >
-                <main className="flex-grow">
-                    {children}
-                </main>
-            </ConditionalLayout>
-        </CartProvider>
+        <Providers>
+            <CartProvider>
+                <ConditionalLayout
+                    header={<Header />}
+                    footer={<Footer />}
+                >
+                    <main className="flex-grow">
+                        {children}
+                    </main>
+                </ConditionalLayout>
+            </CartProvider>
+        </Providers>
         </body>
         </html>
     );
