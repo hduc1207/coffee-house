@@ -55,7 +55,7 @@ export default async function OrdersPage() {
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-medium">{(order.totalAmount / 1000).toFixed(0)}.000đ</p>
+                                            <p className="font-medium">{order.totalAmount.toLocaleString('vi-VN')}đ</p>
 
                                             <p className={`text-sm mt-1 font-medium ${
                                                 order.status === 'PENDING' ? 'text-yellow-600' :
@@ -75,7 +75,7 @@ export default async function OrdersPage() {
                                         {order.items.map((item) => (
                                             <div key={item.id} className="flex justify-between text-sm">
                                                 <span>{item.name} x{item.quantity}</span>
-                                                <span>{(item.price / 1000).toFixed(0)}.000đ</span>
+                                                <span>{item.price.toLocaleString('vi-VN')}đ</span>
                                             </div>
                                         ))}
                                     </div>

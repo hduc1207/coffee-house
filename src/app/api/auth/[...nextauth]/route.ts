@@ -49,12 +49,22 @@ export const authOptions = {
         maxAge: 30 * 24 * 60 * 60,
     },
     callbacks: {
-        async jwt({ token, user }: { token: JWT; user?: User }) {
+        async jwt({ token, user, trigger }: { token: JWT; user?: User; trigger?: string }) {
             if (user) {
                 token.id = user.id;
                 token.name = user.name;
                 token.email = user.email;
                 token.image = user.image;
+                token.role = user.role;
+            }
+            if (trigger === "update") {
+                const dbUser = await prisma.user.findUnique({
+                    where: { id: token.id as string },
+                    select: { role: true },
+                });
+                if (dbUser) {
+                    token.role = dbUser.role;
+                }
             }
             return token;
         },
@@ -64,6 +74,7 @@ export const authOptions = {
                 session.user.name = (token.name as string) || null;
                 session.user.email = (token.email as string) || null;
                 session.user.image = (token.image as string) || null;
+                session.user.role = (token.role as string) || "user";
             }
             return session;
         }

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import MiniAddToCartButton from "@/components/MiniAddToCartButton";
 import type { Product } from "@prisma/client";
 
@@ -10,18 +11,36 @@ export default function MenuClient({ initialProducts }: { initialProducts: Produ
     const [selectedCategory, setSelectedCategory] = useState<string>("Tất cả");
     const [sortBy, setSortBy] = useState("featured");
 
+    const [isCategoryVisible, setIsCategoryVisible] = useState(true);
+    const lastScrollY = useRef(0);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+            if (currentScrollY > lastScrollY.current && currentScrollY > 150) {
+                setIsCategoryVisible(false);
+            } else if (currentScrollY < lastScrollY.current) {
+                setIsCategoryVisible(true);
+            }
+            lastScrollY.current = currentScrollY;
+        };
+
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
     const categories = ["Tất cả", ...Array.from(new Set(initialProducts.map(p => p.category)))];
 
-    const filteredProducts = initialProducts.filter((item) => {
+    let filteredProducts = initialProducts.filter((item) => {
         const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchCategory = selectedCategory === "Tất cả" || item.category === selectedCategory;
         return matchSearch && matchCategory;
     });
 
     if (sortBy === "price-asc") {
-        filteredProducts.sort((a, b) => a.price - b.price);
+        filteredProducts = [...filteredProducts].sort((a, b) => a.price - b.price);
     } else if (sortBy === "price-desc") {
-        filteredProducts.sort((a, b) => b.price - a.price);
+        filteredProducts = [...filteredProducts].sort((a, b) => b.price - a.price);
     }
 
     return (
@@ -68,15 +87,21 @@ export default function MenuClient({ initialProducts }: { initialProducts: Produ
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-12 items-start">
-                    <aside className="w-full md:w-56 shrink-0 space-y-12 sticky top-24">
+
+                    <aside
+                        className={`w-full md:w-56 shrink-0 sticky bg-[#faf8f5] z-30 pt-2 pb-4 md:py-0 mb-6 md:mb-0 border-b border-gray-200 md:border-none transition-all duration-300 ease-in-out md:top-24 ${
+                            isCategoryVisible ? "top-[70px]" : "-top-32"
+                        }`}
+                    >
                         <div>
-                            <h3 className="text-[10px] tracking-[0.2em] uppercase text-gray-500 mb-6 font-bold">Danh mục</h3>
-                            <ul className="space-y-2 text-sm text-gray-600 border-b border-gray-200 pb-8">
+                            <h3 className="text-[10px] tracking-[0.2em] uppercase text-gray-500 mb-6 font-bold hidden md:block">Danh mục</h3>
+
+                            <ul className="flex md:flex-col gap-6 md:gap-0 overflow-x-auto no-scrollbar text-sm text-gray-600 md:border-b border-gray-200 md:pb-8">
                                 {categories.map(cat => (
-                                    <li key={cat}>
+                                    <li key={cat} className="shrink-0">
                                         <button
                                             onClick={() => setSelectedCategory(cat)}
-                                            className={`hover:text-black transition-colors w-full text-left py-2 border-b ${
+                                            className={`hover:text-black transition-colors whitespace-nowrap w-full text-left py-2 border-b-2 md:border-b md:border-b-1 ${
                                                 selectedCategory === cat
                                                     ? "text-black border-black font-medium"
                                                     : "border-transparent hover:border-gray-300"
@@ -89,7 +114,7 @@ export default function MenuClient({ initialProducts }: { initialProducts: Produ
                             </ul>
                         </div>
 
-                        <div>
+                        <div className="hidden md:block mt-12">
                             <h3 className="text-[10px] tracking-[0.2em] uppercase text-gray-500 mb-4 font-bold">Lưu ý</h3>
                             <p className="text-xs text-gray-600 mb-4 leading-relaxed">
                                 Giá hiển thị đã bao gồm VAT.<br />
@@ -102,6 +127,13 @@ export default function MenuClient({ initialProducts }: { initialProducts: Produ
                     </aside>
 
                     <main className="flex-1 w-full">
+                        <div className="md:hidden mb-6 bg-white border border-gray-200 p-4">
+                            <h3 className="text-[10px] tracking-[0.2em] uppercase text-gray-500 mb-2 font-bold">Lưu ý</h3>
+                            <p className="text-xs text-gray-600 leading-relaxed">
+                                Giá hiển thị đã bao gồm VAT. Một số món có thể tạm hết trong khung giờ cao điểm. Danh sách ưu tiên các món dễ đặt qua giao hàng.
+                            </p>
+                        </div>
+
                         {filteredProducts.length === 0 ? (
                             <div className="text-center py-20 border border-gray-200 bg-white">
                                 <p className="text-gray-500 text-sm">Không tìm thấy món nào phù hợp với tìm kiếm của bạn.</p>
@@ -111,11 +143,13 @@ export default function MenuClient({ initialProducts }: { initialProducts: Produ
                                 {filteredProducts.map((item) => (
                                     <div key={item.id} className="border border-gray-200 bg-white p-5 flex flex-col group hover:shadow-md transition-shadow">
 
-                                        <Link href={`/menu/${item.slug}`} className="block overflow-hidden mb-4 bg-[#f5f5f5]">
-                                            <img
+                                        <Link href={`/menu/${item.slug}`} className="block overflow-hidden mb-4 bg-[#f5f5f5] relative aspect-[4/3]">
+                                            <Image
                                                 src={item.image}
                                                 alt={item.name}
-                                                className="w-full aspect-[4/3] object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out"
+                                                fill
+                                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                                className="object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out"
                                             />
                                         </Link>
 

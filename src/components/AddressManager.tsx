@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function AddressManager() {
     const [isAdding, setIsAdding] = useState(false);
@@ -29,14 +30,15 @@ export default function AddressManager() {
             const responseData = await res.json();
             
             if (res.ok) {
+                toast.success("Thêm địa chỉ thành công");
                 router.refresh();
                 setIsAdding(false);
             } else {
-                alert(`Có lỗi xảy ra: ${responseData.message}`);
+                toast.error(responseData.message || "Có lỗi xảy ra");
             }
         } catch (error) {
             console.error("Lỗi kết nối mạng:", error);
-            alert("Lỗi kết nối mạng.");
+            toast.error("Lỗi kết nối mạng.");
         } finally {
             setIsLoading(false);
         }

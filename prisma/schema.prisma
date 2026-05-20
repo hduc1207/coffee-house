@@ -18,6 +18,8 @@ model Product {
   roast       String
   category    String   @default("Cà phê")
   
+  orderItems  OrderItem[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -37,6 +39,10 @@ model Order {
   items          OrderItem[]
   userId    String?
   user      User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 // Bảng lưu chi tiết từng món trong Đơn hàng
@@ -49,6 +55,7 @@ model OrderItem {
   quantity  Int
 
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: SetNull)
 }
 
 // Bảng lưu thông tin tài khoản liên kết với các nhà cung cấp dịch vụ xác thực

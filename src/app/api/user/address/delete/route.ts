@@ -31,8 +31,7 @@ export async function DELETE(req: Request) {
         return NextResponse.json({ message: "Xóa thành công" }, { status: 200 });
     } catch (error) {
         console.error("Lỗi xóa địa chỉ:", error);
-        const errorMessage = error instanceof Error ? error.message : "Lỗi không xác định";
-        return NextResponse.json({ message: `Lỗi Server: ${errorMessage}` }, { status: 500 });
+        return NextResponse.json({ message: "Lỗi Server" }, { status: 500 });
     }
 }
 

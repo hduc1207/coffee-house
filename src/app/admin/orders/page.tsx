@@ -1,7 +1,18 @@
+import { getServerSession } from "next-auth/next";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 
 export default async function AdminOrdersPage() {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.id) {
+        redirect("/login");
+    }
+    if (session.user.role !== "admin") {
+        redirect("/");
+    }
+
     const orders = await prisma.order.findMany({
         orderBy: { createdAt: "desc" },
         include: { items: true },

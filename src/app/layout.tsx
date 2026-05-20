@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import { CartProvider } from "@/lib/CartContext";
 import ConditionalLayout from "@/components/layout/ConditionalLayout";
 import { Providers } from "@/components/Providers";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin", "vietnamese"], variable: "--font-inter" });
 const playfair = Playfair_Display({ subsets: ["latin", "vietnamese"], variable: "--font-playfair" });
@@ -37,6 +38,7 @@ export default function RootLayout({
                 </ConditionalLayout>
             </CartProvider>
         </Providers>
+        <Toaster position="top-right" richColors />
         </body>
         </html>
     );

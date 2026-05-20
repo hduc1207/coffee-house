@@ -4,6 +4,7 @@ import { useCart } from "@/lib/CartContext";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function CheckoutPage() {
     const { cartItems, totalPrice, clearCart } = useCart();
@@ -18,11 +19,11 @@ export default function CheckoutPage() {
     const finalTotal = totalPrice + (deliveryMethod === "pickup" ? 0 : 30000);
     const handleCheckout = async () => {
         if (!customerName || !phone) {
-            alert("Vui lòng điền Tên và Số điện thoại để quán liên hệ nhé!");
+            toast.error("Vui lòng điền Tên và Số điện thoại để quán liên hệ nhé!");
             return;
         }
         if (deliveryMethod === "delivery" && !address) {
-            alert("Vui lòng điền Địa chỉ giao hàng!");
+            toast.error("Vui lòng điền Địa chỉ giao hàng!");
             return;
         }
 
@@ -45,15 +46,19 @@ export default function CheckoutPage() {
                 body: JSON.stringify(orderData),
             });
 
+            const result = await response.json();
+
             if (response.ok) {
-                alert("Đặt hàng thành công! The Bamboo sẽ liên hệ với bạn sớm nhất.");
+                toast.success(result.message || "Đặt hàng thành công! The Bamboo sẽ liên hệ với bạn sớm nhất.");
                 clearCart();
                 router.push("/menu");
             } else {
-                alert("Có lỗi xảy ra, vui lòng thử lại!");
+                // Hiển thị error message từ backend validation
+                toast.error(result.message || "Có lỗi xảy ra, vui lòng thử lại!");
             }
         } catch (error) {
-            alert("Lỗi kết nối mạng!");
+            console.error("Lỗi đặt hàng:", error);
+            toast.error("Lỗi kết nối mạng! Vui lòng kiểm tra kết nối internet và thử lại.");
         } finally {
             setIsSubmitting(false);
         }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface FloatingInputProps {
     label: string;
@@ -59,6 +60,8 @@ export default function ProfileManager({ currentName, currentEmail }: { currentN
     const [activeView, setActiveView] = useState<"default" | "edit">("default");
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [passwordError, setPasswordError] = useState("");
+    const [passwordSuccess, setPasswordSuccess] = useState("");
     const router = useRouter();
 
     const nameParts = currentName.split(" ");
@@ -83,14 +86,55 @@ export default function ProfileManager({ currentName, currentEmail }: { currentN
             });
 
             if (res.ok) {
+                toast.success("Cập nhật thông tin thành công");
                 router.refresh();
                 setActiveView("default");
             } else {
-                alert("Có lỗi xảy ra, vui lòng thử lại.");
+                toast.error("Có lỗi xảy ra, vui lòng thử lại.");
             }
         } catch (error) {
             console.error("Lỗi cập nhật profile:", error);
-            alert("Lỗi kết nối mạng.");
+            toast.error("Lỗi kết nối mạng.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handlePasswordChange = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setPasswordError("");
+        setPasswordSuccess("");
+
+        const formData = new FormData(e.currentTarget);
+        const currentPassword = formData.get("currentPassword") as string;
+        const newPassword = formData.get("newPassword") as string;
+        const confirmPassword = formData.get("confirmPassword") as string;
+
+        if (newPassword !== confirmPassword) {
+            setPasswordError("Mật khẩu xác nhận không khớp.");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const res = await fetch("/api/user/password", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setPasswordSuccess(data.message);
+                e.currentTarget.reset();
+                setTimeout(() => setIsPasswordModalOpen(false), 1500);
+            } else {
+                setPasswordError(data.message || "Có lỗi xảy ra.");
+            }
+        } catch (error) {
+            console.error("Lỗi đổi mật khẩu:", error);
+            setPasswordError("Lỗi kết nối mạng.");
         } finally {
             setIsLoading(false);
         }
@@ -164,10 +208,12 @@ export default function ProfileManager({ currentName, currentEmail }: { currentN
                         <h2 className="text-3xl font-serif mb-2">Đổi mật khẩu</h2>
                         <p className="text-sm mb-6 text-gray-600">Các trường bắt buộc được đánh dấu bằng (*).</p>
 
-                        <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); setIsPasswordModalOpen(false); }}>
-                            <PasswordInput label="Mật khẩu hiện tại*" required />
-                            <PasswordInput label="Mật khẩu mới*" required />
-                            <PasswordInput label="Xác nhận mật khẩu mới*" required />
+                        <form className="space-y-2" onSubmit={handlePasswordChange}>
+                            {passwordError && <p className="text-red-500 text-sm bg-red-50 p-3">{passwordError}</p>}
+                            {passwordSuccess && <p className="text-green-600 text-sm bg-green-50 p-3">{passwordSuccess}</p>}
+                            <PasswordInput name="currentPassword" label="Mật khẩu hiện tại*" required />
+                            <PasswordInput name="newPassword" label="Mật khẩu mới*" required />
+                            <PasswordInput name="confirmPassword" label="Xác nhận mật khẩu mới*" required />
 
                             <button type="submit" className="w-full bg-[#333] text-white py-4 text-sm font-medium hover:bg-black transition-colors !mt-8">
                                 Áp dụng

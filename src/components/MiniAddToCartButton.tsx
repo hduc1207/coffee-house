@@ -2,6 +2,7 @@
 
 import { useCart } from "@/lib/CartContext";
 import { Product } from "@prisma/client";
+import { toast } from "sonner";
 
 export default function MiniAddToCartButton({ product }: { product: Product }) {
     const { addToCart } = useCart();
@@ -9,7 +10,7 @@ export default function MiniAddToCartButton({ product }: { product: Product }) {
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
         addToCart(product);
-        alert(`Thành công! Đã thêm "${product.name}" vào giỏ hàng.`);
+        toast.success(`Đã thêm "${product.name}" vào giỏ hàng.`);
     };
 
     return (

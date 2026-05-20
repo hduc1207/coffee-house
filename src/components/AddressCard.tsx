@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface AddressCardProps {
     id: string;
@@ -29,14 +30,14 @@ export default function AddressCard({ id, name, phone, street }: AddressCardProp
 
             const data = await res.json();
             if (res.ok) {
-                alert("Xóa địa chỉ thành công");
+                toast.success("Xóa địa chỉ thành công");
                 router.refresh();
             } else {
-                alert(`Lỗi: ${data.message}`);
+                toast.error(data.message || "Có lỗi xảy ra");
             }
         } catch (error) {
             console.error("Lỗi xóa:", error);
-            alert("Lỗi kết nối mạng");
+            toast.error("Lỗi kết nối mạng");
         } finally {
             setIsLoading(false);
         }
@@ -58,15 +59,15 @@ export default function AddressCard({ id, name, phone, street }: AddressCardProp
 
             const data = await res.json();
             if (res.ok) {
-                alert("Cập nhật địa chỉ thành công");
+                toast.success("Cập nhật địa chỉ thành công");
                 setIsEditing(false);
                 router.refresh();
             } else {
-                alert(`Lỗi: ${data.message}`);
+                toast.error(data.message || "Có lỗi xảy ra");
             }
         } catch (error) {
             console.error("Lỗi cập nhật:", error);
-            alert("Lỗi kết nối mạng");
+            toast.error("Lỗi kết nối mạng");
         } finally {
             setIsLoading(false);
         }

@@ -42,13 +42,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     };
     const updateQuantity = (id: string, delta: number) => {
         setCartItems((prev) =>
-            prev.map((item) => {
+            prev.reduce((acc, item) => {
                 if (item.id === id) {
                     const newQuantity = item.quantity + delta;
-                    return newQuantity > 0 ? { ...item, quantity: newQuantity } : item;
+                    if (newQuantity <= 0) return acc;
+                    acc.push({ ...item, quantity: newQuantity });
+                    return acc;
                 }
-                return item;
-            })
+                acc.push(item);
+                return acc;
+            }, [] as CartItem[])
         );
     };
 

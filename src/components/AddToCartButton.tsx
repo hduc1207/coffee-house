@@ -2,13 +2,14 @@
 
 import { useCart } from "@/lib/CartContext";
 import { Product } from "@prisma/client";
+import { toast } from "sonner";
 
 export default function AddToCartButton({ product }: { product: Product }) {
     const { addToCart } = useCart();
 
     const handleAddToCart = () => {
         addToCart(product);
-        alert(`Thành công! Đã thêm "${product.name}" vào giỏ hàng.`);
+        toast.success(`Đã thêm "${product.name}" vào giỏ hàng.`);
     };
 
     return (

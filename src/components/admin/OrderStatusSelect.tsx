@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function OrderStatusSelect({ orderId, currentStatus }: { orderId: string, currentStatus: string }) {
     const [status, setStatus] = useState(currentStatus);
@@ -20,7 +21,7 @@ export default function OrderStatusSelect({ orderId, currentStatus }: { orderId:
             });
             router.refresh();
         } catch (error) {
-            alert("Có lỗi xảy ra khi cập nhật!");
+            toast.error("Có lỗi xảy ra khi cập nhật!");
         } finally {
             setIsUpdating(false);
         }

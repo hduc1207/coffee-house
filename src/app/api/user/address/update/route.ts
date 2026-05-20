@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { UpdateAddressSchema } from "@/lib/validations";
 
 export async function PUT(req: Request) {
     try {
@@ -14,13 +16,8 @@ export async function PUT(req: Request) {
         if (!user) return NextResponse.json({ message: "Không tìm thấy user" }, { status: 404 });
 
         const body = await req.json();
-        const { id, name, phone, street } = body;
+        const { id, name, phone, street } = UpdateAddressSchema.parse(body);
 
-        if (!id) {
-            return NextResponse.json({ message: "Thiếu ID địa chỉ" }, { status: 400 });
-        }
-
-        // Verify the address belongs to the user
         const address = await prisma.address.findUnique({ where: { id } });
         if (!address || address.userId !== user.id) {
             return NextResponse.json({ message: "Không có quyền cập nhật địa chỉ này" }, { status: 403 });
@@ -28,18 +25,20 @@ export async function PUT(req: Request) {
 
         const updatedAddress = await prisma.address.update({
             where: { id },
-            data: {
-                name: name || address.name,
-                phone: phone || address.phone,
-                street: street || address.street,
-            }
+            data: { name, phone, street },
         });
 
         return NextResponse.json({ message: "Cập nhật thành công", address: updatedAddress }, { status: 200 });
+
     } catch (error) {
+        if (error instanceof z.ZodError) {
+            return NextResponse.json(
+                { message: error.issues[0].message, field: error.issues[0].path.join(".") },
+                { status: 400 },
+            );
+        }
         console.error("Lỗi cập nhật địa chỉ:", error);
-        const errorMessage = error instanceof Error ? error.message : "Lỗi không xác định";
-        return NextResponse.json({ message: `Lỗi Server: ${errorMessage}` }, { status: 500 });
+        return NextResponse.json({ message: "Lỗi Server" }, { status: 500 });
     }
 }
 
