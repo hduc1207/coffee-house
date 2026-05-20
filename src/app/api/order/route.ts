@@ -46,12 +46,7 @@ const CreateOrderSchema = z.object({
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-
-        // 2. VALIDATE DỮ LIỆU
         const validatedOrder = CreateOrderSchema.parse(body);
-
-        // 3. ⭐ QUAN TRỌNG: VERIFY LẠI TỔNG TIỀN TỪ BACKEND
-        //    (Không tin vào client - User có thể sửa giá)
         const calculatedSubtotal = validatedOrder.items.reduce(
             (sum, item) => sum + (item.price * item.quantity),
             0
@@ -60,7 +55,6 @@ export async function POST(req: Request) {
         const deliveryFee = validatedOrder.deliveryMethod === "pickup" ? 0 : 30000;
         const expectedTotal = calculatedSubtotal + deliveryFee;
 
-        // 4. KIỂM TRA TÍNH TOÁN
         if (validatedOrder.totalAmount !== expectedTotal) {
             console.warn(
                 `⚠️ Price mismatch detected! User: ${validatedOrder.totalAmount}, Expected: ${expectedTotal}`,
@@ -85,17 +79,17 @@ export async function POST(req: Request) {
                 notes: validatedOrder.notes,
                 deliveryMethod: validatedOrder.deliveryMethod,
                 paymentMethod: validatedOrder.paymentMethod,
-                totalAmount: expectedTotal, // ← Dùng giá tính lại từ backend
+                totalAmount: expectedTotal,
                 items: {
                     create: validatedOrder.items.map((item) => ({
-                        productId: item.id || "", // Fallback để tránh undefined
+                        productId: item.id || "",
                         name: item.name,
                         price: item.price,
                         quantity: item.quantity,
                     })),
                 },
             },
-            include: { items: true }, // Return kèm items để response đầy đủ
+            include: { items: true },
         });
 
         return NextResponse.json({
@@ -109,18 +103,16 @@ export async function POST(req: Request) {
         if (error instanceof z.ZodError) {
             const firstError = error.issues[0];
             console.warn("Validation error:", firstError);
-            
+
             return NextResponse.json(
                 {
                     success: false,
                     message: firstError.message || "Dữ liệu không hợp lệ",
-                    field: firstError.path.join("."), // Trả field nào bị lỗi
+                    field: firstError.path.join("."),
                 },
                 { status: 400 }
             );
         }
-
-        // 7. XỬ LÝ LỖI DATABASE
         if (error instanceof Error) {
             console.error("Lỗi khi tạo đơn hàng:", error.message);
         }
