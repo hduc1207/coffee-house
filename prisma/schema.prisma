@@ -6,7 +6,37 @@ datasource db {
   provider = "postgresql"
 }
 
-// Bảng Sản phẩm
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+model Voucher {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  type         DiscountType
+  value        Int
+  maxDiscount  Int?
+  minOrder     Int?
+  usageLimit   Int?
+  usedCount    Int          @default(0)
+  isActive     Boolean      @default(true)
+  expiresAt    DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  orders       Order[]
+
+  @@index([isActive, expiresAt])
+}
+
 model Product {
   id          String   @id @default(uuid())
   slug        String   @unique
@@ -17,35 +47,49 @@ model Product {
   origin      String
   roast       String
   category    String   @default("Cà phê")
-  
+  stock       Int      @default(100)
+  isAvailable Boolean  @default(true)
+
   orderItems  OrderItem[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([isAvailable])
 }
 
-// Bảng lưu thông tin Đơn hàng chung
 model Order {
   id             String      @id @default(uuid())
+  orderCode      Int         @unique @default(autoincrement())
   customerName   String
   phone          String
   address        String?
   notes          String?
   deliveryMethod String
   paymentMethod  String
+  paymentLinkId  String?
+  payosQrCode    String?
+  payosAccountNumber String?
+  payosAccountName   String?
+  payosBin       String?
+  payosCheckoutUrl String?
   totalAmount    Int
-  status         String      @default("PENDING")
+  status         OrderStatus @default(PENDING)
   createdAt      DateTime    @default(now())
   items          OrderItem[]
   userId    String?
   user      User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
+  voucherId      String?
+  voucher        Voucher?    @relation(fields: [voucherId], references: [id], onDelete: SetNull)
+  discountAmount Int         @default(0)
+
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([voucherId])
 }
 
-// Bảng lưu chi tiết từng món trong Đơn hàng
 model OrderItem {
   id        String  @id @default(uuid())
   orderId   String
@@ -55,10 +99,9 @@ model OrderItem {
   quantity  Int
 
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
 }
 
-// Bảng lưu thông tin tài khoản liên kết với các nhà cung cấp dịch vụ xác thực
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -77,7 +120,6 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
-// Bảng lưu thông tin phiên đăng nhập của người dùng
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
@@ -86,7 +128,6 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Bảng lưu thông tin người dùng
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -100,7 +141,7 @@ model User {
   orders        Order[]
   addresses     Address[]
 }
-// Bảng lưu thông tin địa chỉ giao hàng của người dùng
+
 model Address {
   id        String   @id @default(cuid())
   userId    String
@@ -114,7 +155,7 @@ model Address {
 
   @@index([userId])
 }
-// Bảng lưu thông tin cửa hàng
+
 model Store {
   id        String   @id @default(cuid())
   city      String

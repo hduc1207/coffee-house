@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { DELIVERY_FEE } from "@/lib/constants";
 
 export default function CheckoutPage() {
     const { cartItems, totalPrice, clearCart } = useCart();
@@ -16,7 +17,48 @@ export default function CheckoutPage() {
     const [address, setAddress] = useState("");
     const [notes, setNotes] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const finalTotal = totalPrice + (deliveryMethod === "pickup" ? 0 : 30000);
+
+    // Voucher states
+    const [voucherCode, setVoucherCode] = useState("");
+    const [appliedVoucher, setAppliedVoucher] = useState<{ code: string; discountAmount: number } | null>(null);
+    const [isValidatingVoucher, setIsValidatingVoucher] = useState(false);
+
+    const discount = appliedVoucher ? appliedVoucher.discountAmount : 0;
+    const finalTotal = Math.max(0, totalPrice - discount + (deliveryMethod === "pickup" ? 0 : DELIVERY_FEE));
+
+    const handleApplyVoucher = async () => {
+        if (!voucherCode) return;
+        setIsValidatingVoucher(true);
+        try {
+            const response = await fetch("/api/voucher/validate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: voucherCode, subtotal: totalPrice }),
+            });
+            const result = await response.json();
+            if (response.ok && result.success) {
+                setAppliedVoucher({
+                    code: result.voucher.code,
+                    discountAmount: result.discountAmount,
+                });
+                toast.success(result.message || "Áp dụng mã giảm giá thành công!");
+            } else {
+                toast.error(result.message || "Mã giảm giá không hợp lệ.");
+            }
+        } catch (error) {
+            console.error("Lỗi validate voucher:", error);
+            toast.error("Lỗi kết nối khi kiểm tra mã giảm giá.");
+        } finally {
+            setIsValidatingVoucher(false);
+        }
+    };
+
+    const handleRemoveVoucher = () => {
+        setAppliedVoucher(null);
+        setVoucherCode("");
+        toast.info("Đã hủy áp dụng mã giảm giá.");
+    };
+
     const handleCheckout = async () => {
         if (!customerName || !phone) {
             toast.error("Vui lòng điền Tên và Số điện thoại để quán liên hệ nhé!");
@@ -37,6 +79,7 @@ export default function CheckoutPage() {
             paymentMethod,
             totalAmount: finalTotal,
             items: cartItems,
+            voucherCode: appliedVoucher ? appliedVoucher.code : undefined,
         };
 
         try {
@@ -49,9 +92,13 @@ export default function CheckoutPage() {
             const result = await response.json();
 
             if (response.ok) {
-                toast.success(result.message || "Đặt hàng thành công! The Bamboo sẽ liên hệ với bạn sớm nhất.");
-                clearCart();
-                router.push("/menu");
+                if (result.paymentPageUrl) {
+                    router.push(result.paymentPageUrl);
+                } else {
+                    toast.success(result.message || "Đặt hàng thành công! The Bamboo sẽ liên hệ với bạn sớm nhất.");
+                    clearCart();
+                    router.push("/menu");
+                }
             } else {
                 // Hiển thị error message từ backend validation
                 toast.error(result.message || "Có lỗi xảy ra, vui lòng thử lại!");
@@ -108,6 +155,10 @@ export default function CheckoutPage() {
                             <input type="radio" name="payment" checked={paymentMethod === "momo"} onChange={() => setPaymentMethod("momo")} className="w-4 h-4 accent-[#333]" />
                             <span className="text-[15px] text-gray-700">Thanh toán qua Ví MoMo</span>
                         </label>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="payment" checked={paymentMethod === "payos"} onChange={() => setPaymentMethod("payos")} className="w-4 h-4 accent-[#333]" />
+                            <span className="text-[15px] text-gray-700">Chuyển khoản nhanh QR (payOS)</span>
+                        </label>
                     </div>
                 </div>
 
@@ -124,9 +175,51 @@ export default function CheckoutPage() {
                             ))}
                         </div>
 
+                        {/* Voucher Section */}
+                        <div className="border-t border-gray-200 pt-6 pb-2">
+                            <p className="text-xs uppercase tracking-wider text-gray-500 font-bold mb-3">Mã giảm giá (Voucher)</p>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="Nhập mã..."
+                                    value={voucherCode}
+                                    onChange={(e) => setVoucherCode(e.target.value)}
+                                    disabled={appliedVoucher !== null || isValidatingVoucher}
+                                    className="flex-1 border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#333] uppercase disabled:bg-gray-100"
+                                />
+                                {appliedVoucher ? (
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveVoucher}
+                                        className="px-4 py-2 border border-red-500 text-red-500 hover:bg-red-50 text-xs tracking-wider uppercase transition-colors"
+                                    >
+                                        Hủy
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={handleApplyVoucher}
+                                        disabled={!voucherCode || isValidatingVoucher}
+                                        className="px-4 py-2 bg-[#333] hover:bg-black text-white disabled:bg-gray-300 text-xs tracking-wider uppercase transition-colors"
+                                    >
+                                        {isValidatingVoucher ? "..." : "ÁP DỤNG"}
+                                    </button>
+                                )}
+                            </div>
+                            {appliedVoucher && (
+                                <p className="text-xs text-green-600 mt-2 font-medium">✓ Đã áp dụng mã {appliedVoucher.code} thành công!</p>
+                            )}
+                        </div>
+
                         <div className="border-t border-gray-200 pt-6 space-y-4 text-[15px] mb-8">
                             <div className="flex justify-between text-gray-600"><span>Tạm tính</span><span>{totalPrice.toLocaleString('vi-VN')}đ</span></div>
-                            <div className="flex justify-between text-gray-600"><span>Phí giao hàng</span><span>{deliveryMethod === "pickup" ? "0đ" : "30.000đ"}</span></div>
+                            {discount > 0 && (
+                                <div className="flex justify-between text-green-600 font-medium">
+                                    <span>Giảm giá (Voucher)</span>
+                                    <span>-{discount.toLocaleString('vi-VN')}đ</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between text-gray-600"><span>Phí giao hàng</span><span>{deliveryMethod === "pickup" ? "0đ" : `${DELIVERY_FEE.toLocaleString("vi-VN")}đ`}</span></div>
                         </div>
 
                         <div className="flex justify-between items-center pt-6 border-t border-gray-200 mb-10">

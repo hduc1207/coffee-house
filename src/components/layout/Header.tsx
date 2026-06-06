@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Cart from "@/components/layout/Cart";
 import { useCart } from "@/lib/CartContext";
 import LoginButton from "@/components/LoginButton";
@@ -10,23 +10,33 @@ export default function Header() {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isVisible, setIsVisible] = useState(true);
-    const [lastScrollY, setLastScrollY] = useState(0);
+    const lastScrollY = useRef(0);
 
     useEffect(() => {
         const handleScroll = () => {
             const currentScrollY = window.scrollY;
-            if (currentScrollY > lastScrollY && currentScrollY > 100) {
+            if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
                 setIsVisible(false);
             }
-            else if (currentScrollY < lastScrollY) {
+            else if (currentScrollY < lastScrollY.current) {
                 setIsVisible(true);
             }
-            setLastScrollY(currentScrollY);
+            lastScrollY.current = currentScrollY;
         };
 
-        window.addEventListener("scroll", handleScroll);
+        window.addEventListener("scroll", handleScroll, { passive: true });
         return () => window.removeEventListener("scroll", handleScroll);
-    }, [lastScrollY]);
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && isMobileMenuOpen) {
+                setIsMobileMenuOpen(false);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isMobileMenuOpen]);
 
     const { cartItems } = useCart();
     const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -47,6 +57,8 @@ export default function Header() {
                     <div className="relative md:hidden">
                         <button
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            aria-expanded={isMobileMenuOpen}
+                            aria-label={isMobileMenuOpen ? "Đóng menu" : "Mở menu"}
                             className="text-xs uppercase tracking-widest text-aesop-text"
                         >
                             {isMobileMenuOpen ? "Đóng ✕" : "Menu"}

@@ -1,13 +1,11 @@
-import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import AddToCartButton from "@/components/AddToCartButton";
+import { getProductBySlug } from "@/lib/cache";
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const product = await prisma.product.findUnique({
-        where: { slug: id },
-    });
+    const product = await getProductBySlug(id);
 
     if (!product) return notFound();
 

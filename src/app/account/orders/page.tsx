@@ -1,18 +1,22 @@
 import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { authOptions } from "../../api/auth/[...nextauth]/route";
-import LogoutButton from "@/components/LogoutButton";
+import { authOptions } from "@/lib/authOptions";
+import AccountSidebar from "@/components/AccountSidebar";
 import { prisma } from "@/lib/prisma";
 
 export default async function OrdersPage() {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?.id) {
+    if (!session || !session.user?.email) {
         redirect("/");
     }
 
+    const dbUser = await prisma.user.findUnique({
+        where: { email: session.user.email },
+    });
+    if (!dbUser) { redirect("/"); }
+
     const orders = await prisma.order.findMany({
-        where: { userId: session.user.id as string },
+        where: { userId: dbUser.id },
         include: { items: true },
         orderBy: { createdAt: "desc" },
     });
@@ -20,23 +24,7 @@ export default async function OrdersPage() {
     return (
         <div className="min-h-screen bg-[#faf8f5] text-[#333] font-sans pt-24">
             <div className="max-w-6xl mx-auto px-4 py-12 flex flex-col md:flex-row gap-12">
-                <aside className="w-full md:w-64 flex-shrink-0">
-                    <h2 className="text-xl mb-8 font-medium">Xin chào, <br/><span className="block mt-1">{ session?.user?.name || "Khách hàng" }</span></h2>
-
-                    <nav className="space-y-4">
-                        <div className="pb-4 border-b border-gray-200">
-                            <h3 className="text-lg font-medium mb-4">Tài khoản của bạn</h3>
-                            <ul className="space-y-3 text-sm">
-                                <li><Link href="/account" className="hover:text-gray-500 flex justify-between">Cài đặt tài khoản <span>›</span></Link></li>
-                                <li><Link href="/account/orders" className="font-bold flex justify-between">Lịch sử đơn hàng <span>›</span></Link></li>
-                                <li><Link href="/account/address" className="hover:text-gray-500 flex justify-between">Sổ địa chỉ <span>›</span></Link></li>
-                            </ul>
-                        </div>
-                        <div className="pt-4">
-                            <LogoutButton />
-                        </div>
-                    </nav>
-                </aside>
+                <AccountSidebar userName={dbUser?.name || session?.user?.name || ""} />
 
                 <main className="flex-1">
                     <h1 className="text-3xl font-serif mb-8">Lịch sử đơn hàng</h1>
@@ -59,13 +47,13 @@ export default async function OrdersPage() {
 
                                             <p className={`text-sm mt-1 font-medium ${
                                                 order.status === 'PENDING' ? 'text-yellow-600' :
-                                                    order.status === 'CONFIRMED' ? 'text-blue-600' :
-                                                        order.status === 'DELIVERED' ? 'text-green-600' :
+                                                    order.status === 'PROCESSING' ? 'text-blue-600' :
+                                                        order.status === 'COMPLETED' ? 'text-green-600' :
                                                             'text-red-600'
                                             }`}>
                                                 {order.status === 'PENDING' ? 'CHỜ XÁC NHẬN' :
-                                                    order.status === 'CONFIRMED' ? 'ĐÃ XÁC NHẬN' :
-                                                        order.status === 'DELIVERED' ? 'ĐÃ GIAO' :
+                                                    order.status === 'PROCESSING' ? 'ĐANG XỬ LÝ' :
+                                                        order.status === 'COMPLETED' ? 'ĐÃ HOÀN THÀNH' :
                                                             order.status === 'CANCELLED' ? 'ĐÃ HỦY' : order.status}
                                             </p>
                                         </div>

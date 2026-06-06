@@ -1,108 +1,329 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { orderRatelimit, safeRatelimit, getClientIp } from "@/lib/ratelimit";
+import { logger } from "@/lib/logger";
+import { CreateOrderSchema } from "@/lib/validations";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/authOptions";
+import { DELIVERY_FEE } from "@/lib/constants";
+import { payos } from "@/lib/payos";
 
-// 1. ĐỊNH NGHĨA SCHEMA VALIDATION BẰNG ZOD
-const OrderItemSchema = z.object({
-    id: z.string().uuid("ID sản phẩm không hợp lệ").optional(),
-    name: z.string().min(1, "Tên sản phẩm không được trống").max(200),
-    price: z.number().int("Giá phải là số nguyên").positive("Giá phải > 0"),
-    quantity: z.number().int("Số lượng phải là số nguyên").positive("Số lượng phải >= 1"),
-});
+class OrderError extends Error {
+    constructor(message: string, public status: number) {
+        super(message);
+        this.name = "OrderError";
+    }
+}
 
-const CreateOrderSchema = z.object({
-    customerName: z.string()
-        .min(2, "Tên khách hàng phải ít nhất 2 ký tự")
-        .max(100, "Tên khách hàng tối đa 100 ký tự")
-        .trim(),
-
-    phone: z.string()
-        .regex(/^(\+84|0)[0-9]{9,10}$/, "Số điện thoại không hợp lệ (VN format)")
-        .trim(),
-
-    address: z.string()
-        .min(5, "Địa chỉ phải ít nhất 5 ký tự")
-        .max(500, "Địa chỉ tối đa 500 ký tự")
-        .trim(),
-
-    notes: z.string()
-        .max(500, "Ghi chú tối đa 500 ký tự")
-        .trim()
-        .optional()
-        .default(""),
-
-    deliveryMethod: z.enum(["delivery", "pickup"]),
-
-    paymentMethod: z.enum(["cod", "momo"]),
-
-    totalAmount: z.number()
-        .int("Tổng tiền phải là số nguyên")
-        .positive("Tổng tiền phải > 0"),
-
-    items: z.array(OrderItemSchema)
-        .min(1, "Giỏ hàng phải có ít nhất 1 sản phẩm"),
-});
+function computeDiscount(
+    voucher: { type: "PERCENT" | "FIXED"; value: number; maxDiscount: number | null },
+    subtotal: number,
+): number {
+    let raw: number;
+    if (voucher.type === "PERCENT") {
+        raw = Math.floor((subtotal * voucher.value) / 100);
+        if (voucher.maxDiscount !== null) {
+            raw = Math.min(raw, voucher.maxDiscount);
+        }
+    } else {
+        raw = voucher.value;
+    }
+    return Math.min(raw, subtotal);
+}
 
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
-        const validatedOrder = CreateOrderSchema.parse(body);
-        const calculatedSubtotal = validatedOrder.items.reduce(
-            (sum, item) => sum + (item.price * item.quantity),
-            0
-        );
+        const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || null;
 
-        const deliveryFee = validatedOrder.deliveryMethod === "pickup" ? 0 : 30000;
-        const expectedTotal = calculatedSubtotal + deliveryFee;
-
-        if (validatedOrder.totalAmount !== expectedTotal) {
-            console.warn(
-                `⚠️ Price mismatch detected! User: ${validatedOrder.totalAmount}, Expected: ${expectedTotal}`,
-                { customerName: validatedOrder.customerName }
-            );
-
+        const ip = getClientIp(req);
+        const { success, reset } = await safeRatelimit(orderRatelimit, ip);
+        if (!success) {
+            const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
             return NextResponse.json(
                 {
                     success: false,
-                    message: "Tổng tiền không khớp. Có thể bạn đã sửa giá? Vui lòng tải lại trang.",
+                    message: "Bạn đặt hàng quá nhanh. Vui lòng thử lại sau ít phút.",
                 },
-                { status: 400 }
+                { status: 429, headers: { "Retry-After": String(retryAfter) } },
             );
         }
 
-        // 5. TẠO ĐƠN HÀNG VỚI DỮ LIỆU ĐÃ VALIDATE
-        const newOrder = await prisma.order.create({
-            data: {
-                customerName: validatedOrder.customerName,
-                phone: validatedOrder.phone,
-                address: validatedOrder.address,
-                notes: validatedOrder.notes,
-                deliveryMethod: validatedOrder.deliveryMethod,
-                paymentMethod: validatedOrder.paymentMethod,
-                totalAmount: expectedTotal,
-                items: {
-                    create: validatedOrder.items.map((item) => ({
-                        productId: item.id || "",
-                        name: item.name,
-                        price: item.price,
-                        quantity: item.quantity,
-                    })),
-                },
-            },
-            include: { items: true },
-        });
+        let body: unknown;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json(
+                { success: false, message: "Body không phải JSON hợp lệ" },
+                { status: 400 },
+            );
+        }
+        const validatedOrder = CreateOrderSchema.parse(body);
+        const deliveryFee = validatedOrder.deliveryMethod === "pickup" ? 0 : DELIVERY_FEE;
 
-        return NextResponse.json({
-            success: true,
-            message: "Đặt hàng thành công! The Bamboo sẽ liên hệ với bạn sớm nhất.",
-            order: newOrder,
-        });
+        try {
+            const newOrder = await prisma.$transaction(async (tx) => {
+                const productIds = validatedOrder.items.map((i) => i.id);
+                const products = await tx.product.findMany({
+                    where: { id: { in: productIds } },
+                    select: {
+                        id: true,
+                        name: true,
+                        price: true,
+                        stock: true,
+                        isAvailable: true,
+                    },
+                });
+
+                const productMap = new Map(products.map((p) => [p.id, p]));
+
+                let trueSubtotal = 0;
+                for (const item of validatedOrder.items) {
+                    const product = productMap.get(item.id);
+
+                    if (!product) {
+                        throw new OrderError(
+                            `Sản phẩm "${item.name}" không tồn tại`,
+                            400,
+                        );
+                    }
+                    if (!product.isAvailable) {
+                        throw new OrderError(
+                            `Sản phẩm "${product.name}" hiện không còn bán`,
+                            400,
+                        );
+                    }
+                    if (product.price !== item.price) {
+                        logger.warn(
+                            {
+                                productId: product.id,
+                                givenPrice: item.price,
+                                truePrice: product.price,
+                            },
+                            "Price mismatch",
+                        );
+                        throw new OrderError(
+                            `Giá "${product.name}" đã thay đổi. Vui lòng tải lại trang.`,
+                            400,
+                        );
+                    }
+                    if (product.stock < item.quantity) {
+                        throw new OrderError(
+                            `Sản phẩm "${product.name}" chỉ còn ${product.stock} (bạn đặt ${item.quantity})`,
+                            409,
+                        );
+                    }
+
+                    trueSubtotal += product.price * item.quantity;
+                }
+
+                let voucherId: string | null = null;
+                let discountAmount = 0;
+
+                if (validatedOrder.voucherCode) {
+                    const voucher = await tx.voucher.findUnique({
+                        where: { code: validatedOrder.voucherCode },
+                    });
+
+                    if (!voucher || !voucher.isActive) {
+                        throw new OrderError(
+                            "Mã giảm giá không tồn tại hoặc đã bị vô hiệu hoá.",
+                            400,
+                        );
+                    }
+                    if (voucher.expiresAt && voucher.expiresAt.getTime() < Date.now()) {
+                        throw new OrderError("Mã giảm giá đã hết hạn.", 400);
+                    }
+                    if (
+                        voucher.usageLimit !== null &&
+                        voucher.usedCount >= voucher.usageLimit
+                    ) {
+                        throw new OrderError("Mã giảm giá đã hết lượt sử dụng.", 400);
+                    }
+                    if (voucher.minOrder !== null && trueSubtotal < voucher.minOrder) {
+                        throw new OrderError(
+                            `Đơn hàng tối thiểu ${voucher.minOrder.toLocaleString("vi-VN")}đ để áp dụng mã này.`,
+                            400,
+                        );
+                    }
+
+                    discountAmount = computeDiscount(voucher, trueSubtotal);
+                    voucherId = voucher.id;
+                }
+
+                const expectedTotal = trueSubtotal - discountAmount + deliveryFee;
+                if (validatedOrder.totalAmount !== expectedTotal) {
+                    logger.warn(
+                        {
+                            given: validatedOrder.totalAmount,
+                            expected: expectedTotal,
+                            subtotal: trueSubtotal,
+                            discountAmount,
+                            deliveryFee,
+                        },
+                        "Total amount mismatch",
+                    );
+                    throw new OrderError(
+                        "Tổng tiền không khớp. Có thể bạn đã sửa giá hoặc giá đã thay đổi. Vui lòng tải lại trang.",
+                        400,
+                    );
+                }
+
+                if (voucherId) {
+                    const voucherUpdate = await tx.voucher.updateMany({
+                        where: {
+                            id: voucherId,
+                            isActive: true,
+                            OR: [
+                                { usageLimit: null },
+                                { usedCount: { lt: tx.voucher.fields.usageLimit } as never },
+                            ],
+                        },
+                        data: { usedCount: { increment: 1 } },
+                    });
+                    if (voucherUpdate.count !== 1) {
+                        throw new OrderError(
+                            "Mã giảm giá vừa hết lượt sử dụng. Vui lòng thử mã khác.",
+                            409,
+                        );
+                    }
+                }
+
+                for (const item of validatedOrder.items) {
+                    const updated = await tx.product.updateMany({
+                        where: {
+                            id: item.id,
+                            stock: { gte: item.quantity },
+                            isAvailable: true,
+                        },
+                        data: { stock: { decrement: item.quantity } },
+                    });
+
+                    if (updated.count !== 1) {
+                        const product = productMap.get(item.id)!;
+                        throw new OrderError(
+                            `Sản phẩm "${product.name}" vừa hết hàng. Vui lòng giảm số lượng.`,
+                            409,
+                        );
+                    }
+                }
+
+                return tx.order.create({
+                    data: {
+                        userId,
+                        customerName: validatedOrder.customerName,
+                        phone: validatedOrder.phone,
+                        address: validatedOrder.address,
+                        notes: validatedOrder.notes,
+                        deliveryMethod: validatedOrder.deliveryMethod,
+                        paymentMethod: validatedOrder.paymentMethod,
+                        totalAmount: expectedTotal,
+                        items: {
+                            create: validatedOrder.items.map((item) => {
+                                const product = productMap.get(item.id)!;
+                                return {
+                                    productId: item.id,
+                                    name: product.name,
+                                    price: product.price,
+                                    quantity: item.quantity,
+                                };
+                            }),
+                        },
+                    },
+                    include: { items: true },
+                });
+            });
+
+            if (validatedOrder.paymentMethod === "payos") {
+                if (!payos) {
+                    await prisma.$transaction(async (tx) => {
+                        await tx.order.update({
+                            where: { id: newOrder.id },
+                            data: { status: "CANCELLED" },
+                        });
+                        for (const item of newOrder.items) {
+                            await tx.product.update({
+                                where: { id: item.productId },
+                                data: { stock: { increment: item.quantity } },
+                            });
+                        }
+                    });
+
+                    return NextResponse.json(
+                        { success: false, message: "Cổng thanh toán payOS chưa được cấu hình. Vui lòng chọn phương thức khác!" },
+                        { status: 500 }
+                    );
+                }
+
+                try {
+                    const paymentLink = await payos.paymentRequests.create({
+                        orderCode: newOrder.orderCode,
+                        amount: newOrder.totalAmount,
+                        description: `Thanh toan Bamboo #${newOrder.orderCode}`,
+                        cancelUrl: `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/checkout/cancel?orderCode=${newOrder.orderCode}`,
+                        returnUrl: `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/checkout/success?orderCode=${newOrder.orderCode}`,
+                    });
+
+                    await prisma.order.update({
+                        where: { id: newOrder.id },
+                        data: {
+                            paymentLinkId: paymentLink.paymentLinkId,
+                            payosQrCode: paymentLink.qrCode,
+                            payosAccountNumber: paymentLink.accountNumber,
+                            payosAccountName: paymentLink.accountName,
+                            payosBin: paymentLink.bin,
+                            payosCheckoutUrl: paymentLink.checkoutUrl,
+                        },
+                    });
+
+                    return NextResponse.json({
+                        success: true,
+                        message: "Đặt hàng thành công! Đang tải thông tin thanh toán...",
+                        order: newOrder,
+                        paymentPageUrl: `/checkout/payment?orderId=${newOrder.id}`,
+                    });
+                } catch (payosError) {
+                    console.error("Lỗi khi tạo payment link payos:", payosError);
+                    await prisma.$transaction(async (tx) => {
+                        await tx.order.update({
+                            where: { id: newOrder.id },
+                            data: { status: "CANCELLED" },
+                        });
+                        for (const item of newOrder.items) {
+                            await tx.product.update({
+                                where: { id: item.productId },
+                                data: { stock: { increment: item.quantity } },
+                            });
+                        }
+                    });
+
+                    return NextResponse.json(
+                        { success: false, message: "Không thể khởi tạo thanh toán payOS. Vui lòng thử lại!" },
+                        { status: 500 }
+                    );
+                }
+            }
+
+            return NextResponse.json({
+                success: true,
+                message: "Đặt hàng thành công! The Bamboo sẽ liên hệ với bạn sớm nhất.",
+                order: newOrder,
+            });
+        } catch (txError) {
+            if (txError instanceof OrderError) {
+                return NextResponse.json(
+                    { success: false, message: txError.message },
+                    { status: txError.status },
+                );
+            }
+            throw txError;
+        }
 
     } catch (error) {
-        // 6. XỬ LÝ VALIDATION ERRORS
         if (error instanceof z.ZodError) {
             const firstError = error.issues[0];
-            console.warn("Validation error:", firstError);
+            logger.warn({ field: firstError.path.join("."), msg: firstError.message }, "Order validation error");
 
             return NextResponse.json(
                 {
@@ -113,9 +334,7 @@ export async function POST(req: Request) {
                 { status: 400 }
             );
         }
-        if (error instanceof Error) {
-            console.error("Lỗi khi tạo đơn hàng:", error.message);
-        }
+        logger.error({ err: error }, "Lỗi khi tạo đơn hàng");
 
         return NextResponse.json(
             { success: false, message: "Lỗi server. Vui lòng thử lại sau." },

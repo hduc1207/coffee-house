@@ -11,6 +11,7 @@ export default function RegisterForm() {
     const [regConfirmPassword, setRegConfirmPassword] = useState("");
     const [regError, setRegError] = useState("");
     const [regSuccess, setRegSuccess] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,7 +27,20 @@ export default function RegisterForm() {
         if (regPassword.length < 8) {
             return setRegError("Mật khẩu phải có ít nhất 8 ký tự.");
         }
+        if (!/[A-Z]/.test(regPassword)) {
+            return setRegError("Mật khẩu phải chứa ít nhất 1 chữ hoa.");
+        }
+        if (!/[a-z]/.test(regPassword)) {
+            return setRegError("Mật khẩu phải chứa ít nhất 1 chữ thường.");
+        }
+        if (!/[0-9]/.test(regPassword)) {
+            return setRegError("Mật khẩu phải chứa ít nhất 1 số.");
+        }
+        if (!/[^A-Za-z0-9]/.test(regPassword)) {
+            return setRegError("Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt.");
+        }
 
+        setIsLoading(true);
         try {
             const res = await fetch("/api/register", {
                 method: "POST",
@@ -51,6 +65,8 @@ export default function RegisterForm() {
             }
         } catch (error) {
             setRegError("Có lỗi xảy ra, vui lòng thử lại.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -102,8 +118,8 @@ export default function RegisterForm() {
                     </p>
                 </div>
 
-                <button type="submit" className="bg-[#333] text-white px-8 py-4 text-sm font-medium hover:bg-black transition-colors mt-4">
-                    Create account
+                <button type="submit" disabled={isLoading} className="bg-[#333] text-white px-8 py-4 text-sm font-medium hover:bg-black transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed">
+                    {isLoading ? "Đang xử lý..." : "Create account"}
                 </button>
             </form>
         </div>

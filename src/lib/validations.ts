@@ -1,41 +1,14 @@
 import { z } from "zod";
 
-// ============================================================
-// XSS SANITIZATION
-// ============================================================
-
-/**
- * Loại bỏ HTML tags và các pattern XSS phổ biến khỏi chuỗi đầu vào.
- * Dùng trong .transform() của Zod schema để sanitize dữ liệu text.
- *
- * Cách hoạt động:
- * 1. Loại bỏ mọi thẻ HTML <...> kể cả self-closing
- * 2. Loại bỏ các event handler inline (onerror, onload, onclick...)
- * 3. Loại bỏ javascript: protocol trong URL
- * 4. Trim whitespace thừa
- *
- * Lưu ý: Đây là giải pháp phòng thủ cơ bản. Trong production,
- * nên dùng thêm DOMPurify (client-side) hoặc sanitize-html (server-side).
- */
 function sanitizeText(value: string): string {
   return value
-    .replace(/<[^>]*>/g, "")               // Loại bỏ mọi HTML tag
-    .replace(/on\w+\s*=\s*"[^"]*"/gi, "")  // Loại bỏ event handler (onerror, onclick...)
-    .replace(/on\w+\s*=\s*'[^']*'/gi, "")  // Loại bỏ event handler single-quote
-    .replace(/javascript\s*:/gi, "")        // Loại bỏ javascript: protocol
-    .replace(/\s+/g, " ")                   // Chuẩn hóa khoảng trắng
+    .replace(/<[^>]*>/g, "")
+    .replace(/on\w+\s*=\s*"[^"]*"/gi, "")
+    .replace(/on\w+\s*=\s*'[^']*'/gi, "")
+    .replace(/javascript\s*:/gi, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
-
-/**
- * Zod transform helper: sanitize string chống XSS.
- * Dùng: z.string().transform(sanitizeText)
- */
-const safeString = z.string().transform(sanitizeText);
-
-// ============================================================
-// REGISTER SCHEMA
-// ============================================================
 
 export const RegisterSchema = z.object({
   firstName: z
@@ -68,10 +41,6 @@ export const RegisterSchema = z.object({
 
 export type RegisterInput = z.infer<typeof RegisterSchema>;
 
-// ============================================================
-// USER PROFILE SCHEMA
-// ============================================================
-
 export const UpdateProfileSchema = z.object({
   name: z
     .string()
@@ -82,10 +51,6 @@ export const UpdateProfileSchema = z.object({
 
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
 
-// ============================================================
-// ADDRESS SCHEMAS
-// ============================================================
-
 export const CreateAddressSchema = z.object({
   name: z
     .string()
@@ -95,7 +60,7 @@ export const CreateAddressSchema = z.object({
 
   phone: z
     .string()
-    .regex(/^(\+84|0)[0-9]{9,10}$/, "Số điện thoại không hợp lệ (VD: 0909123456 hoặc +84909123456)")
+    .regex(/^(\+84|0)[0-9]{9,10}$/, "Số điện thoại không hợp lệ")
     .transform((v) => v.trim()),
 
   street: z
@@ -118,7 +83,7 @@ export const UpdateAddressSchema = z.object({
 
   phone: z
     .string()
-    .regex(/^(\+84|0)[0-9]{9,10}$/, "Số điện thoại không hợp lệ (VD: 0909123456 hoặc +84909123456)")
+    .regex(/^(\+84|0)[0-9]{9,10}$/, "Số điện thoại không hợp lệ")
     .transform((v) => v.trim()),
 
   street: z
@@ -129,3 +94,55 @@ export const UpdateAddressSchema = z.object({
 });
 
 export type UpdateAddressInput = z.infer<typeof UpdateAddressSchema>;
+
+export const OrderItemSchema = z.object({
+    id: z.string().uuid("ID sản phẩm không hợp lệ"),
+    name: z.string().min(1, "Tên sản phẩm không được trống").max(200),
+    price: z.number().int("Giá phải là số nguyên").positive("Giá phải > 0"),
+    quantity: z.number().int("Số lượng phải là số nguyên")
+        .positive("Số lượng phải >= 1")
+        .max(99, "Số lượng tối đa 99/món"),
+});
+
+export const CreateOrderSchema = z.object({
+    customerName: z.string()
+        .min(2, "Tên khách hàng phải ít nhất 2 ký tự")
+        .max(100, "Tên khách hàng tối đa 100 ký tự")
+        .transform(sanitizeText),
+
+    phone: z.string()
+        .regex(/^(\+84|0)[0-9]{9,10}$/, "Số điện thoại không hợp lệ")
+        .trim(),
+
+    address: z.string()
+        .min(5, "Địa chỉ phải ít nhất 5 ký tự")
+        .max(500, "Địa chỉ tối đa 500 ký tự")
+        .transform(sanitizeText),
+
+    notes: z.string()
+        .max(500, "Ghi chú tối đa 500 ký tự")
+        .optional()
+        .default("")
+        .transform(sanitizeText),
+
+    deliveryMethod: z.enum(["delivery", "pickup"]),
+
+    paymentMethod: z.enum(["cod", "momo", "payos"]),
+
+    totalAmount: z.number()
+        .int("Tổng tiền phải là số nguyên")
+        .positive("Tổng tiền phải > 0"),
+
+    items: z.array(OrderItemSchema)
+        .min(1, "Giỏ hàng phải có ít nhất 1 sản phẩm"),
+
+    voucherCode: z.string()
+        .trim()
+        .toUpperCase()
+        .min(3, "Mã giảm giá phải ít nhất 3 ký tự")
+        .max(30, "Mã giảm giá tối đa 30 ký tự")
+        .regex(/^[A-Z0-9_-]+$/, "Mã giảm giá chỉ chứa chữ, số, _ và -")
+        .optional(),
+});
+
+export type CreateOrderInput = z.infer<typeof CreateOrderSchema>;

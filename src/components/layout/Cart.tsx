@@ -2,9 +2,27 @@
 
 import { useCart } from "@/lib/CartContext";
 import Link from "next/link";
+import { useEffect } from "react";
+import Image from "next/image";
 
 export default function Cart({ isOpen, onCloseAction }: { isOpen: boolean; onCloseAction: () => void }) {
     const { cartItems, removeFromCart, updateQuantity, totalPrice } = useCart();
+
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = "hidden";
+            const handleKeyDown = (e: KeyboardEvent) => {
+                if (e.key === "Escape") onCloseAction();
+            };
+            window.addEventListener("keydown", handleKeyDown);
+            return () => {
+                document.body.style.overflow = "unset";
+                window.removeEventListener("keydown", handleKeyDown);
+            };
+        } else {
+            document.body.style.overflow = "unset";
+        }
+    }, [isOpen, onCloseAction]);
 
     return (
         <>
@@ -26,6 +44,7 @@ export default function Cart({ isOpen, onCloseAction }: { isOpen: boolean; onClo
                     </h2>
                     <button
                         onClick={onCloseAction}
+                        aria-label="Đóng giỏ hàng"
                         className="text-xs tracking-widest text-gray-500 hover:text-aesop-text uppercase transition-colors"
                     >
                         Đóng ✕
@@ -49,7 +68,7 @@ export default function Cart({ isOpen, onCloseAction }: { isOpen: boolean; onClo
                                 <div key={item.id} className="flex gap-6 group">
 
                                     <div className="w-20 h-24 shrink-0 bg-[#E8E6E1] overflow-hidden">
-                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover grayscale-[20%]" />
+                                        <Image src={item.image} alt={item.name} width={80} height={96} className="w-full h-full object-cover grayscale-[20%]" />
                                     </div>
 
                                     <div className="flex-grow flex flex-col justify-between py-1">
@@ -58,6 +77,7 @@ export default function Cart({ isOpen, onCloseAction }: { isOpen: boolean; onClo
                                             <div className="flex items-center gap-3 mt-2">
                                                 <button
                                                     onClick={() => updateQuantity(item.id, -1)}
+                                                    aria-label={`Giảm số lượng ${item.name}`}
                                                     className="w-6 h-6 flex items-center justify-center border border-aesop-border text-gray-500 hover:bg-aesop-text hover:text-aesop-bg transition-colors"
                                                 >
                                                     -
@@ -65,6 +85,7 @@ export default function Cart({ isOpen, onCloseAction }: { isOpen: boolean; onClo
                                                 <span className="text-sm w-4 text-center">{item.quantity}</span>
                                                 <button
                                                     onClick={() => updateQuantity(item.id, 1)}
+                                                    aria-label={`Tăng số lượng ${item.name}`}
                                                     className="w-6 h-6 flex items-center justify-center border border-aesop-border text-gray-500 hover:bg-aesop-text hover:text-aesop-bg transition-colors"
                                                 >
                                                     +

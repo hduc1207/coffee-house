@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import MiniAddToCartButton from "@/components/MiniAddToCartButton";
+import AddToCartButton from "@/components/AddToCartButton";
 import type { Product } from "@prisma/client";
 
 export default function MenuClient({ initialProducts }: { initialProducts: Product[] }) {
@@ -173,7 +173,7 @@ export default function MenuClient({ initialProducts }: { initialProducts: Produ
                                             </span>
 
                                             <div className="scale-90 origin-right">
-                                                <MiniAddToCartButton product={item} />
+                                                <AddToCartButton product={item} variant="mini" />
                                             </div>
                                         </div>
                                     </div>

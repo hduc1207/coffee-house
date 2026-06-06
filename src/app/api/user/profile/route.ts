@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/authOptions";
 import { prisma } from "@/lib/prisma";
 import { UpdateProfileSchema } from "@/lib/validations";
+import { logger } from "@/lib/logger";
 
 export async function PUT(req: Request) {
     try {
@@ -32,7 +33,7 @@ export async function PUT(req: Request) {
                 { status: 400 },
             );
         }
-        console.error("Lỗi:", error);
+        logger.error({ err: error }, "Lỗi cập nhật profile");
         return NextResponse.json({ message: "Lỗi Server" }, { status: 500 });
     }
 }

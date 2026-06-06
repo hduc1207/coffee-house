@@ -1,10 +1,8 @@
-import { prisma } from "@/lib/prisma";
+import { getStores } from "@/lib/cache";
 import { Store } from "@prisma/client";
 
 export default async function StoresPage() {
-    const stores: Store[] = await prisma.store.findMany({
-        orderBy: { createdAt: 'asc' }
-    });
+    const stores: Store[] = await getStores();
 
     return (
         <div className="min-h-screen bg-[#faf8f5] py-24 px-6 md:px-10 lg:px-24">
@@ -19,7 +17,7 @@ export default async function StoresPage() {
 
                 {stores.length === 0 ? (
                     <div className="p-8 border border-gray-300 bg-white text-center">
-                        <p className="text-gray-500">Chưa có cửa hàng nào trong Database. Hãy thêm dữ liệu vào bảng Store nhé!</p>
+                        <p className="text-gray-500">Hiện chưa có cửa hàng nào. Hãy quay lại sau nhé!</p>
                     </div>
                 ) : (
                     <>

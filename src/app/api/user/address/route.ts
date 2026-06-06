@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/authOptions";
 import { prisma } from "@/lib/prisma";
 import { CreateAddressSchema } from "@/lib/validations";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
     try {
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
             },
         });
 
-        return NextResponse.json({ message: "Thêm thành công", address: newAddress }, { status: 200 });
+        return NextResponse.json({ message: "Thêm thành công", address: newAddress }, { status: 201 });
 
     } catch (error) {
         if (error instanceof z.ZodError) {
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
                 { status: 400 },
             );
         }
-        console.error("Lỗi thêm địa chỉ:", error);
+        logger.error({ err: error }, "Lỗi thêm địa chỉ");
         return NextResponse.json({ message: "Lỗi Server" }, { status: 500 });
     }
 }

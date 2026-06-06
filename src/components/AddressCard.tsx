@@ -109,7 +109,12 @@ export default function AddressCard({ id, name, phone, street }: AddressCardProp
                         {isLoading ? "Đang l��u..." : "Lưu"}
                     </button>
                     <button
-                        onClick={() => setIsEditing(false)}
+                        onClick={() => {
+                            setIsEditing(false);
+                            setEditName(name);
+                            setEditPhone(phone);
+                            setEditStreet(street);
+                        }}
                         className="border border-gray-300 px-4 py-2 hover:bg-gray-50"
                     >
                         Hủy

@@ -17,7 +17,7 @@ export default function Footer() {
                 <div className="space-y-6">
                     <h3 className="uppercase tracking-[0.2em] text-xs font-bold text-gray-400">Liên hệ</h3>
                     <div className="text-sm opacity-80 space-y-2 flex flex-col">
-                        <a href="mailto:hello@theritual.com" className="hover:text-aesop-accent transition-colors w-fit">hello@thebamboo.com</a>
+                        <a href="mailto:hello@thebamboo.com" className="hover:text-aesop-accent transition-colors w-fit">hello@thebamboo.com</a>
                         <a href="tel:+84123456789" className="hover:text-aesop-accent transition-colors w-fit">+84 123 456 789</a>
                     </div>
                 </div>

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/authOptions";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 export async function DELETE(req: Request) {
     try {
@@ -30,7 +31,7 @@ export async function DELETE(req: Request) {
 
         return NextResponse.json({ message: "Xóa thành công" }, { status: 200 });
     } catch (error) {
-        console.error("Lỗi xóa địa chỉ:", error);
+        logger.error({ err: error }, "Lỗi xóa địa chỉ");
         return NextResponse.json({ message: "Lỗi Server" }, { status: 500 });
     }
 }

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/authOptions";
+import { OrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
-const ALLOWED_STATUSES = ["PENDING", "CONFIRMED", "DELIVERED", "COMPLETED", "CANCELLED"] as const;
+const ALLOWED_STATUSES = ["PENDING", "PROCESSING", "COMPLETED", "CANCELLED"] as const;
 
 export async function PATCH(req: Request) {
     try {
@@ -16,24 +18,40 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ success: false, message: "Không có quyền truy cập" }, { status: 403 });
         }
 
-        const { orderId, status } = await req.json();
+        let body: unknown;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({ success: false, message: "Body không hợp lệ" }, { status: 400 });
+        }
+
+        if (typeof body !== 'object' || body === null) {
+             return NextResponse.json({ success: false, message: "Body không hợp lệ" }, { status: 400 });
+        }
+
+        const { orderId, status } = body as { orderId?: string, status?: string };
 
         if (!orderId || !status) {
             return NextResponse.json({ success: false, message: "Thiếu orderId hoặc status" }, { status: 400 });
         }
 
-        if (!ALLOWED_STATUSES.includes(status)) {
+        if (!ALLOWED_STATUSES.includes(status as typeof ALLOWED_STATUSES[number])) {
             return NextResponse.json({ success: false, message: "Trạng thái không hợp lệ" }, { status: 400 });
+        }
+
+        const existingOrder = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!existingOrder) {
+            return NextResponse.json({ success: false, message: "Không tìm thấy đơn hàng" }, { status: 404 });
         }
 
         const updatedOrder = await prisma.order.update({
             where: { id: orderId },
-            data: { status },
+            data: { status: status as OrderStatus },
         });
 
         return NextResponse.json({ success: true, order: updatedOrder });
     } catch (error) {
-        console.error("Lỗi cập nhật trạng thái:", error);
+        logger.error({ err: error }, "Lỗi cập nhật trạng thái đơn hàng");
         return NextResponse.json({ success: false, message: "Lỗi server" }, { status: 500 });
     }
 }
