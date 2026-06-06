@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getStores } from "@/lib/cache";
 import { Store } from "@prisma/client";
 

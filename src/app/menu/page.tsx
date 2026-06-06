@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import MenuClient from "@/components/MenuClient";
 import { getMenuProducts } from "@/lib/cache";
 
