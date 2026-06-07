@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import AddToCartButton from "@/components/AddToCartButton";
 import { getProductBySlug } from "@/lib/cache";
+import { getImageUrl } from "@/lib/utils";
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -13,7 +14,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         <div className="max-w-6xl mx-auto pt-32 px-10 pb-24 flex flex-col md:flex-row gap-16">
             <div className="w-full md:w-1/2">
                 <img
-                    src={product.image}
+                    src={getImageUrl(product.image)}
                     alt={product.name}
                     className="w-full h-auto object-cover"
                 />

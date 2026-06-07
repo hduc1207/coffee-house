@@ -4,6 +4,7 @@ import { useCart } from "@/lib/CartContext";
 import Link from "next/link";
 import { useEffect } from "react";
 import Image from "next/image";
+import { getImageUrl } from "@/lib/utils";
 
 export default function Cart({ isOpen, onCloseAction }: { isOpen: boolean; onCloseAction: () => void }) {
     const { cartItems, removeFromCart, updateQuantity, totalPrice } = useCart();
@@ -68,7 +69,7 @@ export default function Cart({ isOpen, onCloseAction }: { isOpen: boolean; onClo
                                 <div key={item.id} className="flex gap-6 group">
 
                                     <div className="w-20 h-24 shrink-0 bg-[#E8E6E1] overflow-hidden">
-                                        <Image src={item.image} alt={item.name} width={80} height={96} className="w-full h-full object-cover grayscale-[20%]" />
+                                        <Image src={getImageUrl(item.image)} alt={item.name} width={80} height={96} className="w-full h-full object-cover grayscale-[20%]" />
                                     </div>
 
                                     <div className="flex-grow flex flex-col justify-between py-1">

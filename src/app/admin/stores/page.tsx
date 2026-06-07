@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import StoreForm from "@/components/admin/StoreForm";
+import { getImageUrl } from "@/lib/utils";
 
 interface Store {
     id: string;
@@ -78,7 +79,7 @@ export default function AdminStoresPage() {
                     {stores.map((store) => (
                         <div key={store.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                             <div className="h-40 relative bg-gray-100">
-                                <Image src={store.image} alt={store.name} fill className="object-cover" unoptimized />
+                                <Image src={getImageUrl(store.image)} alt={store.name} fill className="object-cover" unoptimized />
                             </div>
                             <div className="p-4">
                                 <div className="flex items-start justify-between gap-2 mb-2">

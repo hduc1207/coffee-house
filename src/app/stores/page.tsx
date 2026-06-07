@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getStores } from "@/lib/cache";
 import { Store } from "@prisma/client";
+import { getImageUrl } from "@/lib/utils";
 
 export default async function StoresPage() {
     const stores: Store[] = await getStores();
@@ -40,7 +41,7 @@ export default async function StoresPage() {
                                 <section key={store.id} className="group cursor-default">
                                     <div className="w-full aspect-[16/9] overflow-hidden bg-[#E8E6E1] mb-6 border border-gray-200">
                                         <img
-                                            src={store.image}
+                                            src={getImageUrl(store.image)}
                                             alt={store.name}
                                             className="w-full h-full object-cover grayscale-[10%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-[8s] ease-out"
                                         />

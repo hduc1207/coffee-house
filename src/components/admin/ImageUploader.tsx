@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
+import { getImageUrl } from "@/lib/utils";
 
 interface ImageUploaderProps {
     value: string;
@@ -49,7 +50,7 @@ export default function ImageUploader({ value, onChange, label = "Ảnh" }: Imag
             {/* Preview */}
             {value && (
                 <div className="relative w-full h-40 rounded-lg overflow-hidden border border-gray-200 mb-3 bg-gray-50">
-                    <Image src={value} alt="Preview" fill className="object-cover" unoptimized />
+                    <Image src={getImageUrl(value)} alt="Preview" fill className="object-cover" unoptimized />
                     <button
                         type="button"
                         onClick={() => onChange("")}

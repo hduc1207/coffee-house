@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import AddToCartButton from "@/components/AddToCartButton";
 import type { Product } from "@prisma/client";
+import { getImageUrl } from "@/lib/utils";
 
 export default function MenuClient({ initialProducts }: { initialProducts: Product[] }) {
     const [searchTerm, setSearchTerm] = useState("");
@@ -145,7 +146,7 @@ export default function MenuClient({ initialProducts }: { initialProducts: Produ
 
                                         <Link href={`/menu/${item.slug}`} className="block overflow-hidden mb-4 bg-[#f5f5f5] relative aspect-[4/3]">
                                             <Image
-                                                src={item.image}
+                                                src={getImageUrl(item.image)}
                                                 alt={item.name}
                                                 fill
                                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

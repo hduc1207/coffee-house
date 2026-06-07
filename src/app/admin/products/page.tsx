@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import ProductForm from "@/components/admin/ProductForm";
+import { getImageUrl } from "@/lib/utils";
 
 interface Product {
     id: string;
@@ -141,7 +142,7 @@ export default function AdminProductsPage() {
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                                                    <Image src={product.image} alt={product.name} width={40} height={40} className="w-full h-full object-cover" unoptimized />
+                                                    <Image src={getImageUrl(product.image)} alt={product.name} width={40} height={40} className="w-full h-full object-cover" unoptimized />
                                                 </div>
                                                 <div>
                                                     <p className="font-medium text-gray-800">{product.name}</p>
