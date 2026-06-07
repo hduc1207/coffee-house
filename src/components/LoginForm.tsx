@@ -2,6 +2,8 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import Link from "next/link";
+
 
 export default function LoginForm() {
     const [email, setEmail] = useState("");
@@ -43,7 +45,7 @@ export default function LoginForm() {
                     <label className="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" className="w-4 h-4 accent-black" /> Stay signed in
                     </label>
-                    <button type="button" onClick={() => alert("Tính năng đang được phát triển")} className="underline hover:text-gray-600">Forgotten password?</button>
+                    <Link href="/forgot-password" className="underline hover:text-gray-600">Forgotten password?</Link>
                 </div>
 
                 <button type="submit" disabled={isLoading} className="w-full bg-[#333] text-white py-4 text-sm font-medium hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
@@ -56,7 +58,7 @@ export default function LoginForm() {
             </div>
 
             <div>
-                <p className="text-sm mb-4">Sign In With One Click</p>
+                <p className="text-sm mb-4">Sign In</p>
                 <div className="grid grid-cols-2 gap-4">
                     <button type="button" onClick={() => alert("Tính năng đang được phát triển")} className="border border-gray-400 py-3 flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors text-sm font-medium">Facebook</button>
                     <button onClick={() => signIn("google", { callbackUrl: "/" })} type="button" className="border border-gray-400 py-3 flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors text-sm font-medium">

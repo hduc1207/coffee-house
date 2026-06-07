@@ -56,6 +56,9 @@ export async function safeRatelimit(
     limiter: Ratelimit,
     identifier: string,
 ): Promise<{ success: boolean; reset: number }> {
+    if (process.env.NODE_ENV === "development") {
+        return { success: true, reset: 0 };
+    }
     try {
         const result = await limiter.limit(identifier);
         return { success: result.success, reset: result.reset };
