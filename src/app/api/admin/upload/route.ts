@@ -29,11 +29,22 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, message: "File quá lớn, tối đa 5MB" }, { status: 400 });
         }
 
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
+        let buffer: Buffer;
+        if (typeof file.arrayBuffer === "function") {
+            const bytes = await file.arrayBuffer();
+            buffer = Buffer.from(bytes);
+        } else {
+            // Fallback if arrayBuffer is not natively present on the parsed File/Blob
+            const arrayBuffer = await new Response(file as any).arrayBuffer();
+            buffer = Buffer.from(arrayBuffer);
+        }
 
         // Sanitize filename: giữ extension, tạo tên unique
-        const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+        // Đảm bảo không bị crash nếu file ở dạng Blob (không có thuộc tính name)
+        const filename = (file as any).name || "image.jpg";
+        const parts = filename.split(".");
+        const ext = parts.length > 1 ? parts.pop()?.toLowerCase() ?? "jpg" : "jpg";
+        
         const timestamp = Date.now();
         const safeName = `${timestamp}.${ext}`;
 
