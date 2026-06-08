@@ -11,7 +11,10 @@ function SuccessContent() {
     const orderCode = searchParams.get("orderCode");
 
     useEffect(() => {
-        clearCart();
+        const timer = setTimeout(() => {
+            clearCart();
+        }, 200);
+        return () => clearTimeout(timer);
     }, [clearCart]);
 
     return (
