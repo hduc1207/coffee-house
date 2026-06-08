@@ -181,7 +181,7 @@ describe('POST /api/order - Order Creation API', () => {
                 address: 'Lấy tại quán',
                 notes: '',
                 deliveryMethod: 'pickup',
-                paymentMethod: 'momo',
+                paymentMethod: 'cod',
                 totalAmount: 150000, // ← Fixed: 75000*2 = 150000 (no delivery fee for pickup)
                 items: [
                     {

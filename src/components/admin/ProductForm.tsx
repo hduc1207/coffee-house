@@ -16,6 +16,7 @@ interface Product {
     category: string;
     stock: number;
     isAvailable: boolean;
+    isFeatured: boolean;
 }
 
 interface ProductFormProps {
@@ -28,7 +29,7 @@ const CATEGORIES = ["Cà phê", "Trà", "Nước ép", "Bánh", "Đồ ăn vặt
 
 const INITIAL: Product = {
     name: "", slug: "", price: 0, image: "", description: "",
-    origin: "", roast: "", category: "Cà phê", stock: 100, isAvailable: true,
+    origin: "", roast: "", category: "Cà phê", stock: 100, isAvailable: true, isFeatured: false,
 };
 
 function toSlug(str: string) {
@@ -95,15 +96,15 @@ export default function ProductForm({ product, onClose, onSaved }: ProductFormPr
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                className="bg-white rounded-none border border-neutral-300 shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <h2 className="text-base font-semibold text-gray-800">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-[#faf8f5]/40">
+                    <h2 className="text-xs font-bold uppercase tracking-widest text-gray-800">
                         {isEdit ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
                     </h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                    <button onClick={onClose} className="text-gray-500 hover:text-black transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                     </button>
                 </div>
 
@@ -140,20 +141,26 @@ export default function ProductForm({ product, onClose, onSaved }: ProductFormPr
                                 <option value="false">Tạm ẩn</option>
                             </select>
                         </Field>
+                        <Field label="Tuyển tập hương vị">
+                            <select value={form.isFeatured ? "true" : "false"} onChange={(e) => set("isFeatured", e.target.value === "true")} className={inputClass}>
+                                <option value="false">Không hiển thị</option>
+                                <option value="true">Hiển thị Trang chủ</option>
+                            </select>
+                        </Field>
                     </div>
 
                     <Field label="Mô tả">
                         <textarea rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} className={`${inputClass} resize-none`} />
                     </Field>
 
-                    <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-600 hover:text-black transition-colors rounded-none">
                             Hủy
                         </button>
                         <button
                             type="submit"
                             disabled={isSaving}
-                            className="px-5 py-2 bg-[#6F4E37] hover:bg-[#5a3e2b] text-white text-sm rounded-lg font-medium transition-colors disabled:opacity-50"
+                            className="px-5 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-semibold uppercase tracking-wider rounded-none transition-colors disabled:opacity-50"
                         >
                             {isSaving ? "Đang lưu..." : (isEdit ? "Lưu thay đổi" : "Thêm sản phẩm")}
                         </button>
@@ -164,7 +171,7 @@ export default function ProductForm({ product, onClose, onSaved }: ProductFormPr
     );
 }
 
-const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-[#6F4E37] transition-colors text-gray-700";
+const inputClass = "w-full px-3 py-2 text-xs border border-gray-200 rounded-none focus:outline-none focus:border-black transition-colors text-gray-750 bg-white";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
     return (

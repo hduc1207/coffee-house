@@ -49,12 +49,12 @@ export default function ImageUploader({ value, onChange, label = "Ảnh" }: Imag
 
             {/* Preview */}
             {value && (
-                <div className="relative w-full h-40 rounded-lg overflow-hidden border border-gray-200 mb-3 bg-gray-50">
+                <div className="relative w-full h-40 rounded-none overflow-hidden border border-gray-200 mb-3 bg-gray-50">
                     <Image src={getImageUrl(value)} alt="Preview" fill className="object-cover" unoptimized />
                     <button
                         type="button"
                         onClick={() => onChange("")}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                        className="absolute top-2 right-2 bg-black text-white rounded-none w-6 h-6 flex items-center justify-center text-[10px] hover:bg-neutral-850 transition-colors"
                     >
                         ✕
                     </button>
@@ -65,7 +65,7 @@ export default function ImageUploader({ value, onChange, label = "Ảnh" }: Imag
             <div
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
-                className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center hover:border-gray-300 transition-colors cursor-pointer"
+                className="border border-dashed border-gray-300 rounded-none p-6 text-center hover:border-gray-400 transition-colors cursor-pointer bg-[#faf8f5]/20"
                 onClick={() => fileRef.current?.click()}
             >
                 {isUploading ? (
@@ -105,7 +105,7 @@ export default function ImageUploader({ value, onChange, label = "Ảnh" }: Imag
                     placeholder="Hoặc nhập URL ảnh trực tiếp..."
                     value={value.startsWith("/uploads/") ? "" : value}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg text-gray-600 placeholder-gray-300 focus:outline-none focus:border-gray-400"
+                    className="w-full text-xs px-3 py-2 border border-gray-200 rounded-none text-gray-600 placeholder-gray-350 focus:outline-none focus:border-black bg-white"
                 />
             </div>
 

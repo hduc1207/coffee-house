@@ -16,6 +16,7 @@ const patchSchema = z.object({
     category: z.string().min(1).optional(),
     stock: z.number().int().min(0).optional(),
     isAvailable: z.boolean().optional(),
+    isFeatured: z.boolean().optional(),
 });
 
 async function requireAdmin() {

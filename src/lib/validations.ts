@@ -132,7 +132,7 @@ export const CreateOrderSchema = z.object({
 
     deliveryMethod: z.enum(["delivery", "pickup"]),
 
-    paymentMethod: z.enum(["cod", "momo", "payos"]),
+    paymentMethod: z.enum(["cod", "payos"]),
 
     totalAmount: z.number()
         .int("Tổng tiền phải là số nguyên")

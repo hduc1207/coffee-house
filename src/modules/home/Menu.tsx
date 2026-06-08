@@ -1,30 +1,76 @@
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { getImageUrl } from "@/lib/utils";
 
-const products = [
-    {
-        id: "1",
-        name: "Pour Over Ethiopia",
-        price: "85.000đ",
-        image: "/images/pour-over-ethopia.jpg",
-        description: "Hương hoa nhài, cam chanh và vị ngọt hậu của mật ong rừng."
-    },
-    {
-        id: "2",
-        name: "Iced Flat White",
-        price: "65.000đ",
-        image: "/images/ice-flat-white.jpg",
-        description: "Espresso đậm đà hòa quyện cùng sữa tươi đánh bọt siêu mịn."
-    },
-    {
-        id: "3",
-        name: "Matcha Espresso",
-        price: "75.000đ",
-        image: "/images/matcha-espresso.jpg",
-        description: "Sự giao thoa tĩnh lặng giữa Matcha Uji Nhật Bản và cà phê nguyên bản."
+export const dynamic = "force-dynamic";
+
+async function getFlavorCollection() {
+    // 1. Get manually featured products
+    const featured = await prisma.product.findMany({
+        where: { isAvailable: true, isFeatured: true },
+        orderBy: { updatedAt: "desc" },
+        take: 3,
+    });
+
+    if (featured.length >= 3) {
+        return featured;
     }
-];
 
-export default function Menu() {
+    // 2. Get best sellers from completed orders for the remaining slots
+    const needed = 3 - featured.length;
+    const featuredIds = featured.map(p => p.id);
+
+    // Group order items by product ID from COMPLETED orders
+    const bestSellersGroup = await prisma.orderItem.groupBy({
+        by: ["productId"],
+        where: {
+            order: { status: "COMPLETED" },
+            product: {
+                isAvailable: true,
+                id: { notIn: featuredIds },
+            },
+        },
+        _sum: { quantity: true },
+        orderBy: {
+            _sum: { quantity: "desc" },
+        },
+        take: needed,
+    });
+
+    const bestSellerIds = bestSellersGroup.map(item => item.productId);
+    
+    let bestSellers: any[] = [];
+    if (bestSellerIds.length > 0) {
+        bestSellers = await prisma.product.findMany({
+            where: { id: { in: bestSellerIds } },
+        });
+        // Sort bestSellers to match the order of bestSellerIds
+        bestSellers.sort((a, b) => bestSellerIds.indexOf(a.id) - bestSellerIds.indexOf(b.id));
+    }
+
+    const currentCollection = [...featured, ...bestSellers];
+    if (currentCollection.length >= 3) {
+        return currentCollection;
+    }
+
+    // 3. Fallback to newest available products if still not enough
+    const fillNeeded = 3 - currentCollection.length;
+    const chosenIds = currentCollection.map(p => p.id);
+    const fallbackProducts = await prisma.product.findMany({
+        where: {
+            isAvailable: true,
+            id: { notIn: chosenIds },
+        },
+        orderBy: { createdAt: "desc" },
+        take: fillNeeded,
+    });
+
+    return [...currentCollection, ...fallbackProducts];
+}
+
+export default async function Menu() {
+    const products = await getFlavorCollection();
+
     return (
         <section className="py-24 px-6 md:px-10 lg:px-24 bg-aesop-bg max-w-[1600px] mx-auto">
 
@@ -39,10 +85,10 @@ export default function Menu() {
             {/* Lưới danh sách sản phẩm */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-16">
                 {products.map((item) => (
-                    <div key={item.id} className="group cursor-pointer">
-                        <div className="aspect-[4/5] overflow-hidden mb-6 bg-[#E8E6E1]">
+                    <Link href={`/menu/${item.slug}`} key={item.id} className="group cursor-pointer block">
+                        <div className="aspect-[4/5] overflow-hidden mb-6 bg-[#E8E6E1] relative">
                             <img
-                                src={item.image}
+                                src={getImageUrl(item.image)}
                                 alt={item.name}
                                 className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ease-out"
                             />
@@ -55,9 +101,9 @@ export default function Menu() {
                             {item.description}
                         </p>
                         <p className="text-sm tracking-widest text-aesop-text">
-                            {item.price}
+                            {item.price.toLocaleString("vi-VN")}đ
                         </p>
-                    </div>
+                    </Link>
                 ))}
             </div>
 

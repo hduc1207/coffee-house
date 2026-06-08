@@ -17,6 +17,7 @@ const productSchema = z.object({
     category: z.string().min(1),
     stock: z.number().int().min(0).default(100),
     isAvailable: z.boolean().default(true),
+    isFeatured: z.boolean().default(false),
 });
 
 async function requireAdmin() {

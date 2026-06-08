@@ -38,11 +38,11 @@ export default function OrderStatusSelect({ orderId, currentStatus }: { orderId:
             value={status}
             onChange={(e) => handleStatusChange(e.target.value)}
             disabled={isUpdating}
-            className={`px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-bold outline-none cursor-pointer border-r-4 border-transparent transition-colors ${
-                status === "PENDING" ? "bg-yellow-100 text-yellow-800" :
-                    status === "PROCESSING" ? "bg-blue-100 text-blue-800" :
-                        status === "COMPLETED" ? "bg-green-100 text-green-800" :
-                            "bg-red-100 text-red-800"
+            className={`px-3 py-1.5 rounded-none text-[10px] uppercase tracking-widest font-bold outline-none cursor-pointer border transition-colors ${
+                status === "PENDING" ? "bg-[#FFF9E6] text-[#805B00] border-[#FFE7A3]" :
+                    status === "PROCESSING" ? "bg-[#EBF3FF] text-[#00409E] border-[#C2DBFF]" :
+                        status === "COMPLETED" ? "bg-[#EBFDF5] text-[#006039] border-[#B6F5D9]" :
+                            "bg-[#FFF0F0] text-[#B80000] border-[#FFD1D1]"
             }`}
         >
             <option value="PENDING">Chờ xử lý</option>

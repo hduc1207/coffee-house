@@ -49,6 +49,7 @@ model Product {
   category    String   @default("Cà phê")
   stock       Int      @default(100)
   isAvailable Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
 
   orderItems  OrderItem[]
 

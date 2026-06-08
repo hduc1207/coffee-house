@@ -34,9 +34,9 @@ export default function AdminOrdersRefresh() {
                     id="auto-refresh"
                     checked={autoRefresh}
                     onChange={(e) => setAutoRefresh(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-gray-300 text-[#6F4E37] focus:ring-[#6F4E37] cursor-pointer"
+                    className="h-3.5 w-3.5 rounded-none border-gray-300 text-black focus:ring-black cursor-pointer"
                 />
-                <label htmlFor="auto-refresh" className="cursor-pointer font-medium select-none">
+                <label htmlFor="auto-refresh" className="cursor-pointer font-medium select-none uppercase tracking-wider text-[10px]">
                     Tự động cập nhật (15s)
                 </label>
             </div>
@@ -45,7 +45,7 @@ export default function AdminOrdersRefresh() {
                 type="button"
                 onClick={handleRefresh}
                 disabled={isPending}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600 bg-white border border-gray-200 rounded-none hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50"
             >
                 <svg
                     className={`h-3.5 w-3.5 text-gray-500 ${isPending ? "animate-spin" : ""}`}

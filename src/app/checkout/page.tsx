@@ -218,10 +218,6 @@ export default function CheckoutPage() {
                             <span className="text-[15px] text-gray-700">Thanh toán tiền mặt khi nhận hàng (COD)</span>
                         </label>
                         <label className="flex items-center gap-3 cursor-pointer">
-                            <input type="radio" name="payment" checked={paymentMethod === "momo"} onChange={() => setPaymentMethod("momo")} className="w-4 h-4 accent-[#333]" />
-                            <span className="text-[15px] text-gray-700">Thanh toán qua Ví MoMo</span>
-                        </label>
-                        <label className="flex items-center gap-3 cursor-pointer">
                             <input type="radio" name="payment" checked={paymentMethod === "payos"} onChange={() => setPaymentMethod("payos")} className="w-4 h-4 accent-[#333]" />
                             <span className="text-[15px] text-gray-700">Chuyển khoản nhanh QR (payOS)</span>
                         </label>
