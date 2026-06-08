@@ -74,6 +74,17 @@ export default async function OrdersPage() {
                                         {order.address && <p><strong className="font-medium text-[#333]">Địa chỉ:</strong> {order.address}</p>}
                                         {order.notes && <p><strong className="font-medium text-[#333]">Ghi chú:</strong> {order.notes}</p>}
                                     </div>
+
+                                    {order.status === 'PENDING' && order.paymentMethod === 'payos' && (
+                                        <div className="mt-4 pt-4 border-t">
+                                            <a
+                                                href={`/checkout/payment?orderId=${order.id}`}
+                                                className="inline-block px-5 py-2.5 text-xs uppercase tracking-widest bg-[#333] text-[#faf8f5] hover:bg-[#555] transition-colors"
+                                            >
+                                                Tiếp tục thanh toán
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

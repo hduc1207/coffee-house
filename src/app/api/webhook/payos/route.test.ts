@@ -60,12 +60,14 @@ describe("POST /api/webhook/payos", () => {
         expect(res.status).toBe(400);
     });
 
-    it("returns 404 when order is not found", async () => {
+    it("returns 200 when order is not found (for test webhook or deleted orders)", async () => {
         mockPayosVerify.mockReturnValueOnce({ orderCode: 999 });
         vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(null);
 
         const res = await POST(makeRequest({ code: "00", data: { orderCode: 999 } }));
-        expect(res.status).toBe(404);
+        expect(res.status).toBe(200);
+        const json = await res.json();
+        expect(json.message).toContain("không tìm thấy đơn hàng");
     });
 
     it("returns 200 and skips if order is not PENDING", async () => {

@@ -264,7 +264,6 @@ export async function POST(req: Request) {
                         description: `Thanh toan Bamboo #${newOrder.orderCode}`,
                         cancelUrl: `${baseUrl}/checkout/cancel?orderCode=${newOrder.orderCode}`,
                         returnUrl: `${baseUrl}/checkout/success?orderCode=${newOrder.orderCode}`,
-                        webhookUrl: `${baseUrl}/api/webhook/payos`,
                     });
 
                     await prisma.order.update({

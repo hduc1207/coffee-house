@@ -41,11 +41,9 @@ export async function POST(req: Request) {
         });
 
         if (!order) {
-            console.error(`[payos-webhook] Không tìm thấy đơn hàng với orderCode: ${webhookData.orderCode}`);
-            return NextResponse.json(
-                { success: false, message: "Không tìm thấy đơn hàng tương ứng" },
-                { status: 404 }
-            );
+            console.warn(`[payos-webhook] Không tìm thấy đơn hàng với orderCode: ${webhookData.orderCode}. Có thể đây là giao dịch thử nghiệm hoặc đơn hàng đã bị xóa.`);
+            // Trả về 200 OK để PayOS xác nhận webhook hoạt động (đặc biệt khi PayOS gửi request test ping)
+            return NextResponse.json({ success: true, message: "Nhận webhook thành công nhưng không tìm thấy đơn hàng tương ứng trong hệ thống" });
         }
 
         if (order.status !== "PENDING") {
