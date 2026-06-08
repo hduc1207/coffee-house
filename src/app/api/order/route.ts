@@ -257,12 +257,14 @@ export async function POST(req: Request) {
                 }
 
                 try {
+                    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
                     const paymentLink = await payos.paymentRequests.create({
                         orderCode: newOrder.orderCode,
                         amount: newOrder.totalAmount,
                         description: `Thanh toan Bamboo #${newOrder.orderCode}`,
-                        cancelUrl: `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/checkout/cancel?orderCode=${newOrder.orderCode}`,
-                        returnUrl: `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/checkout/success?orderCode=${newOrder.orderCode}`,
+                        cancelUrl: `${baseUrl}/checkout/cancel?orderCode=${newOrder.orderCode}`,
+                        returnUrl: `${baseUrl}/checkout/success?orderCode=${newOrder.orderCode}`,
+                        webhookUrl: `${baseUrl}/api/webhook/payos`,
                     });
 
                     await prisma.order.update({
