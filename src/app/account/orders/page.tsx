@@ -52,7 +52,7 @@ export default async function OrdersPage() {
                                                             'text-red-600'
                                             }`}>
                                                 {order.status === 'PENDING' ? 'CHỜ XÁC NHẬN' :
-                                                    order.status === 'PROCESSING' ? 'ĐANG XỬ LÝ' :
+                                                    order.status === 'PROCESSING' ? 'ĐÃ THANH TOÁN' :
                                                         order.status === 'COMPLETED' ? 'ĐÃ HOÀN THÀNH' :
                                                             order.status === 'CANCELLED' ? 'ĐÃ HỦY' : order.status}
                                             </p>

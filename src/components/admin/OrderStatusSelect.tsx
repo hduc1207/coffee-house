@@ -46,7 +46,7 @@ export default function OrderStatusSelect({ orderId, currentStatus }: { orderId:
             }`}
         >
             <option value="PENDING">Chờ xử lý</option>
-            <option value="PROCESSING">Đang xử lý</option>
+            <option value="PROCESSING">Đã thanh toán</option>
             <option value="COMPLETED">Đã hoàn thành</option>
             <option value="CANCELLED">Hủy đơn</option>
         </select>

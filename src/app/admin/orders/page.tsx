@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 const STATUS_FILTER = [
     { value: "all", label: "Tất cả" },
     { value: "PENDING", label: "Chờ xử lý" },
-    { value: "PROCESSING", label: "Đang xử lý" },
+    { value: "PROCESSING", label: "Đã thanh toán" },
     { value: "COMPLETED", label: "Hoàn thành" },
     { value: "CANCELLED", label: "Đã hủy" },
 ];

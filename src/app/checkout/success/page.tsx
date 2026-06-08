@@ -22,16 +22,16 @@ function SuccessContent() {
             <h1 className="text-3xl font-serif text-[#333] mb-4">Đặt hàng thành công!</h1>
             <p className="text-sm text-gray-600 mb-8 leading-relaxed">
                 Cảm ơn bạn đã lựa chọn The Bamboo. 
-                {orderCode && <span> Đơn hàng mã số #{orderCode} của bạn đã được ghi nhận và đang tiến hành xử lý.</span>}
+                {orderCode && <span> Đơn hàng mã số #{orderCode} của bạn đã được thanh toán thành công và đang được chuẩn bị.</span>}
                 Chúng tôi sẽ liên hệ giao hàng sớm nhất có thể.
             </p>
             <div className="space-y-4">
-                <Link href="/menu" className="block w-full py-4 bg-[#333] hover:bg-black text-white text-xs tracking-[0.2em] uppercase transition-colors font-semibold">
+                <a href="/menu" className="block w-full py-4 bg-[#333] hover:bg-black text-white text-sm tracking-wider uppercase transition-colors font-semibold rounded-lg">
                     Tiếp tục mua sắm
-                </Link>
-                <Link href="/account/orders" className="block w-full py-4 border border-gray-300 hover:border-gray-800 text-gray-700 text-xs tracking-[0.2em] uppercase transition-colors font-semibold">
+                </a>
+                <a href="/account/orders" className="block w-full py-4 border border-gray-300 hover:border-gray-800 text-gray-700 text-sm tracking-wider uppercase transition-colors font-semibold rounded-lg">
                     Lịch sử đơn hàng
-                </Link>
+                </a>
             </div>
         </div>
     );
