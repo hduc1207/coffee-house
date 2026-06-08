@@ -14,16 +14,16 @@ export async function PUT(req: Request) {
         }
 
         const body = await req.json();
-        const { name } = UpdateProfileSchema.parse(body);
+        const { name, phone } = UpdateProfileSchema.parse(body);
 
         const updatedUser = await prisma.user.update({
             where: { email: session.user.email },
-            data: { name },
+            data: { name, phone },
         });
 
         return NextResponse.json({
             message: "Thành công",
-            user: { id: updatedUser.id, name: updatedUser.name, email: updatedUser.email },
+            user: { id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, phone: updatedUser.phone },
         }, { status: 200 });
 
     } catch (error) {

@@ -38,7 +38,7 @@ describe("PUT /api/user/profile", () => {
     it("trả 401 khi chưa đăng nhập", async () => {
         vi.mocked(getServerSession).mockResolvedValueOnce(null);
 
-        const res = await PUT(makeRequest({ name: "Anh A" }));
+        const res = await PUT(makeRequest({ name: "Anh A", phone: "0987654321" }));
         const json = await res.json();
 
         expect(res.status).toBe(401);
@@ -51,7 +51,7 @@ describe("PUT /api/user/profile", () => {
             user: { email: "a@b.com" },
         } as never);
 
-        const res = await PUT(makeRequest({ name: "" }));
+        const res = await PUT(makeRequest({ name: "", phone: "0987654321" }));
         const json = await res.json();
 
         expect(res.status).toBe(400);
@@ -64,8 +64,21 @@ describe("PUT /api/user/profile", () => {
             user: { email: "a@b.com" },
         } as never);
 
-        const res = await PUT(makeRequest({ name: "A".repeat(101) }));
+        const res = await PUT(makeRequest({ name: "A".repeat(101), phone: "0987654321" }));
         expect(res.status).toBe(400);
+    });
+
+    it("trả 400 khi phone sai định dạng", async () => {
+        vi.mocked(getServerSession).mockResolvedValueOnce({
+            user: { email: "a@b.com" },
+        } as never);
+
+        const res = await PUT(makeRequest({ name: "Hợp lệ", phone: "12345" }));
+        const json = await res.json();
+
+        expect(res.status).toBe(400);
+        expect(json.field).toBe("phone");
+        expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
     it("update thành công và trả về 200 với name đã sanitize", async () => {
@@ -77,17 +90,18 @@ describe("PUT /api/user/profile", () => {
             id: "u1",
             email: "a@b.com",
             name: "Nguyễn Văn A",
+            phone: "0987654321",
         } as never);
 
         // Tên có HTML tag - sẽ bị sanitizeText() loại bỏ
-        const res = await PUT(makeRequest({ name: "<script>Nguyễn Văn A</script>" }));
+        const res = await PUT(makeRequest({ name: "<script>Nguyễn Văn A</script>", phone: "0987654321" }));
         const json = await res.json();
 
         expect(res.status).toBe(200);
         expect(json.message).toBe("Thành công");
         expect(prisma.user.update).toHaveBeenCalledWith({
             where: { email: "a@b.com" },
-            data: { name: "Nguyễn Văn A" }, // tag bị strip
+            data: { name: "Nguyễn Văn A", phone: "0987654321" }, // tag bị strip
         });
     });
 
@@ -97,7 +111,7 @@ describe("PUT /api/user/profile", () => {
         } as never);
         vi.mocked(prisma.user.update).mockRejectedValueOnce(new Error("DB down"));
 
-        const res = await PUT(makeRequest({ name: "Hợp lệ" }));
+        const res = await PUT(makeRequest({ name: "Hợp lệ", phone: "0987654321" }));
         expect(res.status).toBe(500);
     });
 });

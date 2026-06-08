@@ -25,6 +25,7 @@ export default async function AccountPage() {
                     <ProfileManager
                         currentName={dbUser?.name || ""}
                         currentEmail={dbUser?.email || ""}
+                        currentPhone={dbUser?.phone || ""}
                     />
                 </main>
 

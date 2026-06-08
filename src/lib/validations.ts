@@ -47,6 +47,11 @@ export const UpdateProfileSchema = z.object({
     .min(1, "Tên không được trống")
     .max(100, "Tên tối đa 100 ký tự")
     .transform(sanitizeText),
+
+  phone: z
+    .string()
+    .regex(/^(\+84|0)[0-9]{9,10}$/, "Số điện thoại không hợp lệ")
+    .transform((v) => v.trim()),
 });
 
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;

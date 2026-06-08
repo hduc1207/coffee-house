@@ -66,7 +66,7 @@ const PasswordInput = ({ label, name, required }: PasswordInputProps) => {
         </div>
     );
 };
-export default function ProfileManager({ currentName, currentEmail }: { currentName: string, currentEmail: string }) {
+export default function ProfileManager({ currentName, currentEmail, currentPhone }: { currentName: string, currentEmail: string, currentPhone: string }) {
     const [activeView, setActiveView] = useState<"default" | "edit">("default");
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -85,6 +85,7 @@ export default function ProfileManager({ currentName, currentEmail }: { currentN
         const formData = new FormData(e.currentTarget);
         const newFirstName = formData.get("firstName");
         const newLastName = formData.get("lastName");
+        const phone = formData.get("phone");
 
         const fullName = `${newLastName} ${newFirstName}`.trim();
 
@@ -92,7 +93,7 @@ export default function ProfileManager({ currentName, currentEmail }: { currentN
             const res = await fetch("/api/user/profile", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: fullName }),
+                body: JSON.stringify({ name: fullName, phone }),
             });
 
             if (res.ok) {
@@ -100,7 +101,8 @@ export default function ProfileManager({ currentName, currentEmail }: { currentN
                 router.refresh();
                 setActiveView("default");
             } else {
-                toast.error("Có lỗi xảy ra, vui lòng thử lại.");
+                const data = await res.json();
+                toast.error(data.message || "Có lỗi xảy ra, vui lòng thử lại.");
             }
         } catch (error) {
             console.error("Lỗi cập nhật profile:", error);
@@ -170,7 +172,7 @@ export default function ProfileManager({ currentName, currentEmail }: { currentN
                     <FloatingInput name="firstName" label="Tên*" defaultValue={firstName} required bgColor="bg-[#faf8f5]" />
                     <FloatingInput name="lastName" label="Họ*" defaultValue={lastName} required bgColor="bg-[#faf8f5]" />
                     <FloatingInput label="Địa chỉ Email*" defaultValue={currentEmail} type="email" disabled bgColor="bg-[#faf8f5]" />
-                    <FloatingInput label="Số điện thoại*" type="tel" bgColor="bg-[#faf8f5]" />
+                    <FloatingInput name="phone" label="Số điện thoại*" defaultValue={currentPhone} required type="tel" bgColor="bg-[#faf8f5]" />
 
                     <button
                         type="submit"
@@ -205,6 +207,10 @@ export default function ProfileManager({ currentName, currentEmail }: { currentN
                 <div>
                     <p className="font-bold uppercase text-[10px] tracking-widest mb-1 text-gray-500">Địa chỉ Email</p>
                     <p className="text-base text-[#333]">{currentEmail || "Chưa có email"}</p>
+                </div>
+                <div>
+                    <p className="font-bold uppercase text-[10px] tracking-widest mb-1 text-gray-500">Số điện thoại</p>
+                    <p className="text-base text-[#333]">{currentPhone || "Chưa cập nhật"}</p>
                 </div>
             </div>
 

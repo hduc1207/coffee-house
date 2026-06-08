@@ -34,22 +34,22 @@ export default async function OrdersPage() {
                     ) : (
                         <div className="space-y-6">
                             {orders.map((order) => (
-                                <div key={order.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                <div key={order.id} className="bg-white p-6 rounded-none border border-gray-200">
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
-                                            <h3 className="font-medium">Đơn hàng #{order.id.slice(-8)}</h3>
-                                            <p className="text-sm text-gray-600">
+                                            <h3 className="font-semibold text-sm uppercase tracking-wider">Đơn hàng #{order.id.slice(-8)}</h3>
+                                            <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider">
                                                 {new Date(order.createdAt).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-medium">{order.totalAmount.toLocaleString('vi-VN')}đ</p>
+                                            <p className="font-medium text-base">{order.totalAmount.toLocaleString('vi-VN')}đ</p>
 
-                                            <p className={`text-sm mt-1 font-medium ${
-                                                order.status === 'PENDING' ? 'text-yellow-600' :
-                                                    order.status === 'PROCESSING' ? 'text-blue-600' :
-                                                        order.status === 'COMPLETED' ? 'text-green-600' :
-                                                            'text-red-600'
+                                            <p className={`text-[10px] mt-1 font-semibold tracking-widest ${
+                                                order.status === 'PENDING' ? 'text-amber-700' :
+                                                    order.status === 'PROCESSING' ? 'text-blue-700' :
+                                                        order.status === 'COMPLETED' ? 'text-emerald-700' :
+                                                            'text-gray-400'
                                             }`}>
                                                 {order.status === 'PENDING' ? 'CHỜ XÁC NHẬN' :
                                                     order.status === 'PROCESSING' ? 'ĐÃ THANH TOÁN' :

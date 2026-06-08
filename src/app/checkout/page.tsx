@@ -171,9 +171,12 @@ export default function CheckoutPage() {
                     </div>
 
                     {deliveryMethod === "delivery" && addresses.length > 0 && (
-                        <div className="mb-8 p-5 bg-white border border-gray-200 rounded-xl shadow-sm">
-                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                                <span>📍</span> Chọn nhanh địa chỉ đã lưu:
+                        <div className="mb-8 p-5 bg-white border border-gray-200 rounded-none shadow-none">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5 text-black shrink-0" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                </svg>
+                                Địa chỉ giao hàng
                             </p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {addresses.map((addr) => (
@@ -181,9 +184,9 @@ export default function CheckoutPage() {
                                         key={addr.id}
                                         type="button"
                                         onClick={() => handleSelectAddress(addr.id)}
-                                        className={`p-3 text-left border rounded-xl transition-all flex flex-col gap-1 text-sm bg-white ${
+                                        className={`p-3 text-left border rounded-none transition-all flex flex-col gap-1 text-sm bg-white ${
                                             selectedAddressId === addr.id
-                                                ? "border-[#6F4E37] ring-1 ring-[#6F4E37] shadow-sm bg-amber-50/10"
+                                                ? "border-black bg-[#faf8f5]"
                                                 : "border-gray-200 hover:border-gray-400"
                                         }`}
                                     >
@@ -226,7 +229,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="w-full lg:w-2/5">
-                    <div className="bg-white p-8 lg:p-10 border border-gray-100 shadow-sm sticky top-32">
+                    <div className="bg-white p-8 lg:p-10 border border-gray-200 rounded-none shadow-none sticky top-32">
                         <h2 className="text-xl font-serif text-[#333] mb-6 border-b border-gray-100 pb-4">Đơn Hàng ({cartItems.length} món)</h2>
 
                         <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2">
