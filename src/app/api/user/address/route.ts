@@ -41,3 +41,26 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "Lỗi Server" }, { status: 500 });
     }
 }
+
+export async function GET() {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user?.email) {
+            return NextResponse.json({ success: false, message: "Chưa đăng nhập" }, { status: 401 });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { email: session.user.email },
+            include: { addresses: { orderBy: { createdAt: "desc" } } }
+        });
+
+        if (!user) {
+            return NextResponse.json({ success: false, message: "Không tìm thấy user" }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true, addresses: user.addresses });
+    } catch (error) {
+        logger.error({ err: error }, "Lỗi lấy danh sách địa chỉ");
+        return NextResponse.json({ success: false, message: "Lỗi Server" }, { status: 500 });
+    }
+}

@@ -2,7 +2,7 @@
 
 import { useCart } from "@/lib/CartContext";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DELIVERY_FEE } from "@/lib/constants";
@@ -22,6 +22,44 @@ export default function CheckoutPage() {
     const [voucherCode, setVoucherCode] = useState("");
     const [appliedVoucher, setAppliedVoucher] = useState<{ code: string; discountAmount: number } | null>(null);
     const [isValidatingVoucher, setIsValidatingVoucher] = useState(false);
+
+    // Address states
+    const [addresses, setAddresses] = useState<{ id: string; name: string; phone: string; street: string }[]>([]);
+    const [selectedAddressId, setSelectedAddressId] = useState<string>("");
+
+    // Fetch user saved addresses
+    useEffect(() => {
+        const fetchAddresses = async () => {
+            try {
+                const res = await fetch("/api/user/address");
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.addresses && data.addresses.length > 0) {
+                        setAddresses(data.addresses);
+                        // Tự động điền địa chỉ đầu tiên
+                        const firstAddr = data.addresses[0];
+                        setCustomerName(firstAddr.name);
+                        setPhone(firstAddr.phone);
+                        setAddress(firstAddr.street);
+                        setSelectedAddressId(firstAddr.id);
+                    }
+                }
+            } catch (error) {
+                console.error("Lỗi tải sổ địa chỉ:", error);
+            }
+        };
+        void fetchAddresses();
+    }, []);
+
+    const handleSelectAddress = (addrId: string) => {
+        setSelectedAddressId(addrId);
+        const addr = addresses.find((a) => a.id === addrId);
+        if (addr) {
+            setCustomerName(addr.name);
+            setPhone(addr.phone);
+            setAddress(addr.street);
+        }
+    };
 
     const discount = appliedVoucher ? appliedVoucher.discountAmount : 0;
     const finalTotal = Math.max(0, totalPrice - discount + (deliveryMethod === "pickup" ? 0 : DELIVERY_FEE));
@@ -131,6 +169,31 @@ export default function CheckoutPage() {
                         <button onClick={() => setDeliveryMethod("delivery")} className={`pb-4 px-2 text-sm tracking-widest uppercase transition-colors ${deliveryMethod === "delivery" ? "border-b-2 border-[#333] text-[#333]" : "text-gray-400"}`}>Giao Tận Nơi</button>
                         <button onClick={() => setDeliveryMethod("pickup")} className={`pb-4 px-2 text-sm tracking-widest uppercase transition-colors ${deliveryMethod === "pickup" ? "border-b-2 border-[#333] text-[#333]" : "text-gray-400"}`}>Lấy Tại Quán</button>
                     </div>
+
+                    {deliveryMethod === "delivery" && addresses.length > 0 && (
+                        <div className="mb-8 p-5 bg-white border border-gray-200 rounded-xl shadow-sm">
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                                <span>📍</span> Chọn nhanh địa chỉ đã lưu:
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {addresses.map((addr) => (
+                                    <button
+                                        key={addr.id}
+                                        type="button"
+                                        onClick={() => handleSelectAddress(addr.id)}
+                                        className={`p-3 text-left border rounded-xl transition-all flex flex-col gap-1 text-sm bg-white ${
+                                            selectedAddressId === addr.id
+                                                ? "border-[#6F4E37] ring-1 ring-[#6F4E37] shadow-sm bg-amber-50/10"
+                                                : "border-gray-200 hover:border-gray-400"
+                                        }`}
+                                    >
+                                        <span className="font-semibold text-gray-800">{addr.name} - {addr.phone}</span>
+                                        <span className="text-xs text-gray-500 line-clamp-1">{addr.street}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="space-y-6 mb-12">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
