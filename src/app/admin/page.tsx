@@ -197,7 +197,7 @@ export default async function AdminDashboardPage() {
                                             <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${s.color}`}>{s.label}</span>
                                         </td>
                                         <td className="px-6 py-3 text-xs text-gray-400">
-                                            {new Date(order.createdAt).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })}
+                                            {new Date(order.createdAt).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" })}
                                         </td>
                                     </tr>
                                 );

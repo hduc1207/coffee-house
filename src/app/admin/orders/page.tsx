@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/authOptions";
 import { prisma } from "@/lib/prisma";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
+import AdminOrdersRefresh from "@/components/admin/AdminOrdersRefresh";
 
 export const dynamic = "force-dynamic";
 
@@ -49,9 +50,12 @@ export default async function AdminOrdersPage({
     return (
         <div className="p-8 max-w-7xl mx-auto">
             {/* Header */}
-            <div className="mb-6">
-                <h1 className="text-2xl font-semibold text-gray-800">Quản lý Đơn hàng</h1>
-                <p className="text-sm text-gray-500 mt-1">{orders.length} đơn hàng</p>
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-semibold text-gray-800">Quản lý Đơn hàng</h1>
+                    <p className="text-sm text-gray-500 mt-1">{orders.length} đơn hàng</p>
+                </div>
+                <AdminOrdersRefresh />
             </div>
 
             {/* Filters */}
@@ -162,7 +166,7 @@ export default async function AdminOrdersPage({
                                         </td>
 
                                         <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
-                                            {new Date(order.createdAt).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })}
+                                            {new Date(order.createdAt).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" })}
                                         </td>
 
                                         <td className="px-4 py-3">

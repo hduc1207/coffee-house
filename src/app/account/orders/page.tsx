@@ -39,7 +39,7 @@ export default async function OrdersPage() {
                                         <div>
                                             <h3 className="font-medium">Đơn hàng #{order.id.slice(-8)}</h3>
                                             <p className="text-sm text-gray-600">
-                                                {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                                                {new Date(order.createdAt).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}
                                             </p>
                                         </div>
                                         <div className="text-right">

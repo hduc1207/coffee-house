@@ -29,14 +29,14 @@ export default function Cart({ isOpen, onCloseAction }: { isOpen: boolean; onClo
         <>
             <div
                 className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] transition-opacity duration-500 ${
-                    isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+                    isOpen ? "opacity-100 visible pointer-events-auto" : "opacity-0 invisible pointer-events-none"
                 }`}
                 onClick={onCloseAction}
             ></div>
 
             <div
                 className={`fixed top-0 right-0 h-full w-full md:w-[450px] bg-aesop-bg z-[70] shadow-2xl transform transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] flex flex-col ${
-                    isOpen ? "translate-x-0" : "translate-x-full"
+                    isOpen ? "translate-x-0 pointer-events-auto" : "translate-x-full pointer-events-none"
                 }`}
             >
                 <div className="flex justify-between items-center p-8 border-b border-aesop-border/50 shrink-0">
