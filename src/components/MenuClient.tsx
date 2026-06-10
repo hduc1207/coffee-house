@@ -30,7 +30,7 @@ export default function MenuClient({ initialProducts }: { initialProducts: Produ
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    const categories = ["Tất cả", ...Array.from(new Set(initialProducts.map(p => p.category)))];
+    const categories = ["Tất cả", "Cà phê", "Trà", "Bánh ngọt", "Khác"];
 
     let filteredProducts = initialProducts.filter((item) => {
         const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());

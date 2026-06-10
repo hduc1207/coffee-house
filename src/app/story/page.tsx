@@ -7,7 +7,7 @@ export default function StoryPage() {
                 </h1>
                 <div className="w-full h-[50vh] md:h-[70vh] overflow-hidden bg-[#E8E6E1]">
                     <img
-                        src="https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=1600&auto=format&fit=crop"
+                        src="/images/nền-1.png"
                         alt="Coffee pouring"
                         className="w-full h-full object-cover grayscale-[15%] hover:scale-105 transition-transform duration-[20s] ease-out"
                     />
@@ -24,7 +24,7 @@ export default function StoryPage() {
                 </div>
                 <div className="md:w-1/2 w-full aspect-square bg-[#E8E6E1] overflow-hidden">
                     <img
-                        src="https://images.unsplash.com/photo-1511537190424-bbbab87ac5eb?q=80&w=800&auto=format&fit=crop"
+                        src="/images/ảnh-1.jpg"
                         alt="Coffee farm"
                         className="w-full h-full object-cover grayscale-[20%]"
                     />
@@ -34,7 +34,7 @@ export default function StoryPage() {
             <section className="px-6 md:px-10 lg:px-24 max-w-[1200px] mx-auto flex flex-col-reverse md:flex-row gap-16 md:gap-24 items-center">
                 <div className="md:w-1/2 w-full aspect-[4/5] bg-[#E8E6E1] overflow-hidden">
                     <img
-                        src="https://images.unsplash.com/photo-1600093463592-8e36ae95ef56?q=80&w=800&auto=format&fit=crop"
+                        src="/images/ảnh-2.jpg"
                         alt="Architecture space"
                         className="w-full h-full object-cover grayscale-[20%]"
                     />

@@ -4,7 +4,7 @@ export default function Hero() {
     return (
         <section className="relative h-[85vh] w-full flex items-center justify-center overflow-hidden bg-aesop-text">
             <img
-                src="https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=2000&auto=format&fit=crop"
+                src="/images/nền-1.png"
                 alt="Coffee Brewing"
                 className="absolute inset-0 w-full h-full object-cover object-center opacity-70 grayscale-[20%]"
             />

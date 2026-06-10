@@ -25,7 +25,7 @@ interface ProductFormProps {
     onSaved: () => void;
 }
 
-const CATEGORIES = ["Cà phê", "Trà", "Nước ép", "Bánh", "Đồ ăn vặt", "Khác"];
+const CATEGORIES = ["Cà phê", "Trà", "Bánh ngọt", "Khác"];
 
 const INITIAL: Product = {
     name: "", slug: "", price: 0, image: "", description: "",

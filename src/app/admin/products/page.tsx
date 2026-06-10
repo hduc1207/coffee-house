@@ -21,7 +21,7 @@ interface Product {
     roast: string;
 }
 
-const CATEGORIES = ["Tất cả", "Cà phê", "Trà", "Nước ép", "Bánh", "Đồ ăn vặt", "Khác"];
+const CATEGORIES = ["Tất cả", "Cà phê", "Trà", "Bánh ngọt", "Khác"];
 
 export default function AdminProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
