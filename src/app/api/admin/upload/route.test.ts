@@ -8,18 +8,23 @@ vi.mock("@/lib/authOptions", () => ({
     authOptions: {},
 }));
 
-vi.mock("fs/promises", () => ({
-    writeFile: vi.fn(),
-    mkdir: vi.fn(),
-}));
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 import { POST } from "./route";
 import { getServerSession } from "next-auth/next";
-import { writeFile, mkdir } from "fs/promises";
 
-describe("POST /api/admin/upload", () => {
+describe("POST /api/admin/upload (Supabase Storage)", () => {
+    const originalEnv = process.env;
+
     beforeEach(() => {
         vi.clearAllMocks();
+        process.env = {
+            ...originalEnv,
+            NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
+            SUPABASE_SERVICE_ROLE_KEY: "service-role-key-test",
+            SUPABASE_BUCKET: "coffee-images-test",
+        };
     });
 
     it("trả 403 khi chưa đăng nhập hoặc không phải admin", async () => {
@@ -56,13 +61,40 @@ describe("POST /api/admin/upload", () => {
         expect(json.message).toMatch(/Không có file/);
     });
 
+    it("trả 500 khi chưa cấu hình biến môi trường Supabase", async () => {
+        vi.mocked(getServerSession).mockResolvedValueOnce({
+            user: { role: "admin" },
+        } as any);
+
+        delete (process.env as any).NEXT_PUBLIC_SUPABASE_URL;
+
+        const blob = new Blob(["fake-image-content"], { type: "image/png" });
+        const file = new File([blob], "test-image.png", { type: "image/png" });
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const req = new Request("http://localhost/api/admin/upload", {
+            method: "POST",
+            body: formData,
+        });
+
+        const res = await POST(req);
+        const json = await res.json();
+
+        expect(res.status).toBe(500);
+        expect(json.message).toMatch(/Chưa cấu hình Supabase URL/);
+    });
+
     it("upload thành công khi gửi file hợp lệ", async () => {
         vi.mocked(getServerSession).mockResolvedValueOnce({
             user: { role: "admin" },
         } as any);
 
-        vi.mocked(mkdir).mockResolvedValue(undefined);
-        vi.mocked(writeFile).mockResolvedValue(undefined);
+        mockFetch.mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({ Key: "coffee-images-test/1780934168137.png" })
+        });
 
         const blob = new Blob(["fake-image-content"], { type: "image/png" });
         const file = new File([blob], "test-image.png", { type: "image/png" });
@@ -80,9 +112,8 @@ describe("POST /api/admin/upload", () => {
 
         expect(res.status).toBe(200);
         expect(json.success).toBe(true);
-        expect(json.url).toMatch(/^\/uploads\/\d+\.png$/);
-        expect(mkdir).toHaveBeenCalled();
-        expect(writeFile).toHaveBeenCalled();
+        expect(json.url).toMatch(/^https:\/\/project\.supabase\.co\/storage\/v1\/object\/public\/coffee-images-test\/\d+\.png$/);
+        expect(mockFetch).toHaveBeenCalled();
     });
 
     it("upload thành công khi gửi file ở dạng Blob (không có name)", async () => {
@@ -90,13 +121,15 @@ describe("POST /api/admin/upload", () => {
             user: { role: "admin" },
         } as any);
 
-        vi.mocked(mkdir).mockResolvedValue(undefined);
-        vi.mocked(writeFile).mockResolvedValue(undefined);
+        mockFetch.mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({ Key: "coffee-images-test/1780934168137.jpg" })
+        });
 
         const blob = new Blob(["fake-image-content-raw-blob"], { type: "image/png" });
 
         const formData = new FormData();
-        formData.append("file", blob); // standard Blob appended to form-data
+        formData.append("file", blob);
 
         const req = new Request("http://localhost/api/admin/upload", {
             method: "POST",
@@ -108,8 +141,7 @@ describe("POST /api/admin/upload", () => {
 
         expect(res.status).toBe(200);
         expect(json.success).toBe(true);
-        expect(json.url).toMatch(/^\/uploads\/\d+\.jpg$/); // defaults to .jpg
-        expect(mkdir).toHaveBeenCalled();
-        expect(writeFile).toHaveBeenCalled();
+        expect(json.url).toMatch(/^https:\/\/project\.supabase\.co\/storage\/v1\/object\/public\/coffee-images-test\/\d+\.jpg$/);
+        expect(mockFetch).toHaveBeenCalled();
     });
 });

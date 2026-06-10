@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/authOptions";
 import { logger } from "@/lib/logger";
@@ -29,18 +27,18 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, message: "File quá lớn, tối đa 5MB" }, { status: 400 });
         }
 
-        let buffer: Buffer;
-        if (typeof file.arrayBuffer === "function") {
-            const bytes = await file.arrayBuffer();
-            buffer = Buffer.from(bytes);
-        } else {
-            // Fallback if arrayBuffer is not natively present on the parsed File/Blob
-            const arrayBuffer = await new Response(file as any).arrayBuffer();
-            buffer = Buffer.from(arrayBuffer);
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const bucketName = process.env.SUPABASE_BUCKET || "coffee-images";
+
+        if (!supabaseUrl || !supabaseKey) {
+            logger.error("[upload] Missing Supabase configurations in environment variables");
+            return NextResponse.json({ 
+                success: false, 
+                message: "Chưa cấu hình Supabase URL hoặc Service Role Key trên máy chủ." 
+            }, { status: 500 });
         }
 
-        // Sanitize filename: giữ extension, tạo tên unique
-        // Đảm bảo không bị crash nếu file ở dạng Blob (không có thuộc tính name)
         const filename = (file as any).name || "image.jpg";
         const parts = filename.split(".");
         const ext = parts.length > 1 ? parts.pop()?.toLowerCase() ?? "jpg" : "jpg";
@@ -48,14 +46,31 @@ export async function POST(req: Request) {
         const timestamp = Date.now();
         const safeName = `${timestamp}.${ext}`;
 
-        const uploadsDir = join(process.cwd(), "public", "uploads");
-        await mkdir(uploadsDir, { recursive: true });
-        await writeFile(join(uploadsDir, safeName), buffer);
+        const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucketName}/${safeName}`;
 
-        const url = `/uploads/${safeName}`;
-        logger.info({ filename: safeName, size: file.size }, "[upload] File uploaded");
+        const uploadRes = await fetch(uploadUrl, {
+            method: "POST",
+            headers: {
+                "apikey": supabaseKey,
+                "Authorization": `Bearer ${supabaseKey}`,
+                "Content-Type": file.type || "image/jpeg",
+            },
+            body: file,
+        });
 
-        return NextResponse.json({ success: true, url });
+        const uploadData = await uploadRes.json();
+        
+        if (uploadRes.ok) {
+            const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${safeName}`;
+            logger.info({ filename: safeName, size: file.size, url: publicUrl }, "[upload] File uploaded to Supabase Storage");
+            return NextResponse.json({ success: true, url: publicUrl });
+        } else {
+            logger.error({ err: uploadData }, "[upload] Supabase Storage upload failed");
+            return NextResponse.json({ 
+                success: false, 
+                message: `Lỗi upload lên Supabase Storage: ${uploadData.message || "Unknown error"}` 
+            }, { status: 500 });
+        }
     } catch (error) {
         logger.error({ err: error }, "[upload] Upload failed");
         return NextResponse.json({ success: false, message: "Lỗi server khi upload" }, { status: 500 });
